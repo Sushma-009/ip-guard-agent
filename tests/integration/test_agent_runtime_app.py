@@ -18,6 +18,20 @@ import pytest
 from google.adk.events.event import Event
 
 from app.agent_runtime_app import AgentEngineApp
+from expense_agent.agent import llm_reviewer
+from google.adk.models.llm_response import LlmResponse
+from google.genai import types
+
+# Mock the model call to avoid API key / billing issues during integration testing
+async def mock_before_model(callback_context, llm_request) -> LlmResponse:
+    return LlmResponse(
+        content=types.Content(
+            role="model",
+            parts=[types.Part.from_text(text="Novelty Score: 8/10. Commercial Impact: 9/10. Prior art lookup returned no matching blockers. Recommended for patent filing.")]
+        )
+    )
+
+llm_reviewer.before_model_callback = mock_before_model
 
 
 @pytest.fixture
@@ -39,7 +53,7 @@ async def test_agent_stream_query(agent_app: AgentEngineApp) -> None:
     Tests that the agent returns valid streaming responses.
     """
     # Create message and events for the async_stream_query
-    message = '{"data": {"amount": 45.50, "submitter": "Alice", "category": "Meals", "description": "Client lunch with partners", "date": "2026-07-01"}}'
+    message = '{"data": {"title": "AI Patent Router", "submitter": "Alice", "department": "R&D", "description": "A neural routing system that directs patents to appropriate examiners dynamically.", "libraries_used": [], "date": "2026-07-01"}}'
     events = []
     async for event in agent_app.async_stream_query(message=message, user_id="test"):
         events.append(event)

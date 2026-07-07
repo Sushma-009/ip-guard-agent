@@ -60,6 +60,8 @@ from google.adk.models import Gemini
 from google.adk.events.event import Event
 from google.adk.events.request_input import RequestInput
 from google.adk.agents.context import Context
+from google.adk.tools import ToolContext
+from google.adk.models.llm_response import LlmResponse
 
 from google.genai import types
 from .config import Config
@@ -67,46 +69,47 @@ from .config import Config
 
 # --- Pydantic Schemas ---
 
-class ExpenseDetails(BaseModel):
-    amount: float
-    submitter: str
-    category: str
-    description: str
-    date: str
+class SubmissionDetails(BaseModel):
+    title: str = Field(description="The title of the innovation or patent idea")
+    submitter: str = Field(description="The name of the submitting developer/engineer")
+    department: str = Field(description="The department of the submitter")
+    description: str = Field(description="Detailed description of the technology and how it works")
+    libraries_used: List[str] = Field(default_factory=list, description="Third-party libraries, frameworks, or licenses used")
+    date: str = Field(description="Date of submission")
 
 
-class ExpenseInput(BaseModel):
-    data: Any
-
-
-class RiskAnalysis(BaseModel):
-    risk_score: int = Field(description="Risk score from 1 (low) to 10 (high)")
-    risk_factors: List[str] = Field(description="List of identified risk factors")
-    explanation: str = Field(description="Brief explanation of the risk assessment")
+class InnovationAnalysis(BaseModel):
+    novelty_score: int = Field(description="Score from 1 (highly derivative) to 10 (extremely novel/unique)")
+    commercial_impact: int = Field(description="Score from 1 (low value) to 10 (high business value)")
+    flagged_risks: List[str] = Field(description="Legal or technical risks identified (e.g. licensing, complexity)")
+    explanation: str = Field(description="Detailed legal and technical justification of the score")
 
 
 class HumanDecision(BaseModel):
     decision: str = Field(description="The manual decision, must be either 'APPROVE' or 'REJECT'")
+    comment: Optional[str] = Field(default="", description="Feedback or conditions from the IP Counsel")
 
 
 class WorkflowState(BaseModel):
-    expense: Optional[ExpenseDetails] = None
-    risk_analysis: Optional[RiskAnalysis] = None
+    submission: Optional[SubmissionDetails] = None
+    innovation_analysis: Optional[str] = None
     status: Optional[str] = None
     reason: Optional[str] = None
     redacted_types: List[str] = Field(default_factory=list)
     is_security_event: bool = False
+    security_reasons: List[str] = Field(default_factory=list)
 
 
 class WorkflowOutput(BaseModel):
-    amount: float
+    title: str
     submitter: str
-    category: str
+    department: str
     description: str
+    libraries_used: List[str] = Field(default_factory=list)
     date: str
     status: str
     reason: str
-    risk_analysis: Optional[RiskAnalysis] = None
+    innovation_analysis: Optional[str] = None
     redacted_types: List[str] = Field(default_factory=list)
     is_security_event: bool = False
 
@@ -114,7 +117,7 @@ class WorkflowOutput(BaseModel):
 # --- Helper Functions for Security ---
 
 def scrub_pii(text: str) -> tuple[str, list[str]]:
-    """Scrubs SSNs and Credit Card numbers from the text and returns categories redacted."""
+    """Scrubs SSNs, Credit Cards, and developer credentials from the text and returns categories redacted."""
     redacted_types = []
     
     # Matches SSN with hyphens (e.g. 000-00-0000)
@@ -123,13 +126,38 @@ def scrub_pii(text: str) -> tuple[str, list[str]]:
         text = ssn_pattern.sub("[REDACTED SSN]", text)
         redacted_types.append("SSN")
         
-    # Matches Credit Cards (13 to 16 digits, with optional spaces/dashes)
+    # Matches Credit Cards
     cc_pattern = re.compile(r"\b(?:\d[ -]*?){13,16}\b")
     if cc_pattern.search(text):
         text = cc_pattern.sub("[REDACTED CREDIT CARD]", text)
         redacted_types.append("Credit Card")
         
+    # Matches developer tokens/secrets: e.g. api_key="abc", password="xyz"
+    secrets_pattern = re.compile(r"\b(api_key|password|secret|token|private_key)\s*=\s*['\"][^'\"]{10,}['\"]", re.IGNORECASE)
+    if secrets_pattern.search(text):
+        text = secrets_pattern.sub(r"\1=[REDACTED SECRET]", text)
+        redacted_types.append("Developer Secret")
+        
     return text, redacted_types
+
+
+def detect_forbidden_licenses(text: str, libraries: List[str]) -> List[str]:
+    """Detects copyleft licenses in description or list of libraries."""
+    violations = []
+    copyleft_keywords = ["gpl", "agpl", "copyleft", "gnu general public"]
+    
+    text_lower = text.lower()
+    for kw in copyleft_keywords:
+        if kw in text_lower:
+            violations.append(f"Description refers to copyleft terms ({kw})")
+            
+    for lib in libraries:
+        lib_lower = lib.lower()
+        for kw in copyleft_keywords:
+            if kw in lib_lower:
+                violations.append(f"Forbidden copyleft library/license: {lib}")
+                
+    return violations
 
 
 def detect_prompt_injection(text: str) -> bool:
@@ -140,13 +168,10 @@ def detect_prompt_injection(text: str) -> bool:
         "bypass rules",
         "bypass threshold",
         "override threshold",
-        "auto-approve this expense",
+        "auto-approve this submission",
         "you must approve",
         "system override",
         "override system",
-        "ignore the threshold",
-        "ignore the limit",
-        "override the limit",
         "force approval",
         "force approve"
     ]
@@ -154,10 +179,39 @@ def detect_prompt_injection(text: str) -> bool:
     return any(phrase in lower_text for phrase in phrases)
 
 
+# --- Custom Agent Skill (Function Tool) ---
+
+def check_prior_art(query: str, tool_context: ToolContext = None) -> dict:
+    """Searches the patent registry database for prior art matching the query.
+
+    Args:
+        query: The patent or technology name to look up in the registry.
+
+    Returns:
+        dict: The result containing matches found or confirmation of clean status.
+    """
+    # Simple simulated database of existing patented concepts
+    database = {
+        "blockchain database": "US Patent 9,123,456 - Distributed Ledger Architecture",
+        "llm security gate": "US Patent 10,987,654 - AI Prompt Injection Firewall",
+        "expense auto-approval": "US Patent 8,555,222 - Automated Expense Audit Workflow"
+    }
+    
+    query_lower = query.lower()
+    matches = []
+    for key, patent in database.items():
+        if key in query_lower:
+            matches.append(patent)
+            
+    if matches:
+        return {"status": "MATCH_FOUND", "prior_art": matches}
+    return {"status": "CLEAN", "prior_art": []}
+
+
 # --- Workflow Nodes ---
 
-def parse_expense(ctx: Context, node_input: Any) -> Event:
-    """Parses incoming expense data (handling Content objects, base64 and raw JSON), and routes based on threshold."""
+def parse_submission(ctx: Context, node_input: Any) -> Event:
+    """Parses incoming innovation submission and validates input structure."""
     # Scrub PII from user_content in-place so no downstream LlmAgent or trace history leaks raw PII
     detected_types = []
     if ctx.user_content and ctx.user_content.parts:
@@ -182,8 +236,6 @@ def parse_expense(ctx: Context, node_input: Any) -> Event:
         except Exception as e:
             raise ValueError(f"Failed to parse outer JSON from Content message. Error: {e}")
         data = event_json.get("data", event_json)
-    elif isinstance(node_input, ExpenseInput):
-        data = node_input.data
     elif isinstance(node_input, dict):
         data = node_input.get("data", node_input)
     else:
@@ -192,7 +244,6 @@ def parse_expense(ctx: Context, node_input: Any) -> Event:
     # 2. Decode / parse raw data
     if isinstance(data, str):
         try:
-            # Try to base64 decode (Pub/Sub message)
             decoded = base64.b64decode(data).decode("utf-8")
             try:
                 parsed_data = json.loads(decoded)
@@ -201,11 +252,9 @@ def parse_expense(ctx: Context, node_input: Any) -> Event:
                     import ast
                     parsed_data = ast.literal_eval(decoded)
                 except Exception:
-                    # Fix mixed quotes (e.g. 'key") and python-dict string quirks by normalizing single quotes
                     normalized = decoded.replace("'", '"')
                     parsed_data = json.loads(normalized)
         except Exception:
-            # Fall back to direct JSON/eval string parsing (local testing)
             try:
                 parsed_data = json.loads(data)
             except Exception:
@@ -217,156 +266,194 @@ def parse_expense(ctx: Context, node_input: Any) -> Event:
                         normalized = data.replace("'", '"')
                         parsed_data = json.loads(normalized)
                     except Exception as e:
-                        raise ValueError(f"Failed to parse data as base64 or JSON/eval/normalized string: {e}")
+                        raise ValueError(f"Failed to parse data as base64 or JSON: {e}")
     elif isinstance(data, dict):
         parsed_data = data
     else:
-        raise ValueError(f"Unsupported data type for expense event: {type(data)}")
+        raise ValueError(f"Unsupported data type: {type(data)}")
 
-    # 2. Extract fields robustly
-    amount_raw = parsed_data.get("amount", 0.0)
-    if isinstance(amount_raw, str):
-        amount_raw = amount_raw.replace("$", "").replace(",", "").strip()
-    try:
-        amount = float(amount_raw)
-    except (ValueError, TypeError):
-        amount = 0.0
+    # 3. Extract fields robustly
+    title = str(parsed_data.get("title", "")).strip()
+    submitter = str(parsed_data.get("submitter", "")).strip()
+    department = str(parsed_data.get("department", "")).strip()
+    description = str(parsed_data.get("description", "")).strip()
+    
+    libraries = parsed_data.get("libraries_used", [])
+    if isinstance(libraries, str):
+        libraries = [lib.strip() for lib in libraries.split(",") if lib.strip()]
+    elif not isinstance(libraries, list):
+        libraries = []
 
-    expense = ExpenseDetails(
-        amount=amount,
-        submitter=str(parsed_data.get("submitter", "")),
-        category=str(parsed_data.get("category", "")),
-        description=str(parsed_data.get("description", "")),
+    submission = SubmissionDetails(
+        title=title,
+        submitter=submitter,
+        department=department,
+        description=description,
+        libraries_used=libraries,
         date=str(parsed_data.get("date", "")),
     )
 
-    # 3. Apply routing rule
-    if expense.amount < Config.THRESHOLD:
+    # 4. Apply routing rule: auto-reject if title is missing or description is too short
+    if not title or len(description) < 15:
         return Event(
-            output=expense,
-            route="auto_approve",
-            state={"expense": expense.model_dump()}
+            output=submission,
+            route="fast_reject",
+            state={"submission": submission.model_dump()}
         )
     else:
         return Event(
-            output=expense,
-            route="llm_review",
-            state={"expense": expense.model_dump()}
+            output=submission,
+            route="security_gate",
+            state={"submission": submission.model_dump()}
         )
 
 
-def auto_approve(node_input: ExpenseDetails) -> WorkflowOutput:
-    """Instantly approves the expense under the threshold, bypassing the LLM."""
+def fast_reject(node_input: SubmissionDetails) -> WorkflowOutput:
+    """Automatically rejects submissions that lack complete information."""
     return WorkflowOutput(
-        amount=node_input.amount,
+        title=node_input.title,
         submitter=node_input.submitter,
-        category=node_input.category,
+        department=node_input.department,
         description=node_input.description,
+        libraries_used=node_input.libraries_used,
         date=node_input.date,
-        status="APPROVED",
-        reason=f"Auto-approved: expense amount is below the ${Config.THRESHOLD:.2f} threshold."
+        status="REJECTED",
+        reason="Auto-rejected: Incomplete submission. Title must be present, and description must be at least 15 characters long."
     )
 
 
-def security_checkpoint(ctx: Context, node_input: ExpenseDetails) -> Event:
-    """Checkpoint to scrub PII and defend against prompt injection before LLM review."""
+def security_checkpoint(ctx: Context, node_input: SubmissionDetails) -> Event:
+    """Checkpoint to scrub secrets/PII, inspect copyleft licenses, and defend against injection."""
     description = node_input.description
+    libraries = node_input.libraries_used
     
-    # 1. Scrub PII
+    # 1. Scrub PII & Secrets
     clean_description, redacted_types = scrub_pii(description)
     existing_redacted = ctx.state.get("redacted_types", []) or []
     all_redacted = list(set(redacted_types + existing_redacted))
     
-    updated_expense = node_input.model_copy(update={"description": clean_description})
+    updated_submission = node_input.model_copy(update={"description": clean_description})
     
-    # 2. Heuristic prompt injection defense
+    # 2. Check for license violations
+    license_violations = detect_forbidden_licenses(clean_description, libraries)
+    
+    # 3. Prompt injection check
     is_injection = detect_prompt_injection(clean_description)
     
+    is_security_event = is_injection or len(license_violations) > 0
+    reasons = []
+    if is_injection:
+        reasons.append("Potential prompt injection attempt detected.")
+    if license_violations:
+        reasons.extend(license_violations)
+        
     state_delta = {
-        "expense": updated_expense.model_dump(),
+        "submission": updated_submission.model_dump(),
         "redacted_types": all_redacted,
-        "is_security_event": is_injection
+        "is_security_event": is_security_event,
+        "security_reasons": reasons
     }
     
-    if is_injection:
-        # Bypasses LLM entirely, routes straight to human review
+    if is_security_event:
+        # Bypasses the LLM entirely, routing straight to human review
         return Event(
-            output=updated_expense,
+            output=updated_submission,
             route="security_flagged",
             state=state_delta
         )
     else:
-        # Clean expense continues on to the LLM reviewer
+        # Clean submission continues to the LLM reviewer
         return Event(
-            output=updated_expense,
+            output=updated_submission,
             route="clean",
             state=state_delta
         )
 
 
-# LLM node for reviewing expense for risk factors
+# --- Callback for Integration Tests ---
+
+async def mock_before_model(callback_context, llm_request) -> Optional[LlmResponse]:
+    """Mock callback triggered during integration tests to avoid billing/API issues."""
+    if os.environ.get("INTEGRATION_TEST") == "TRUE" or os.environ.get("PYTEST_CURRENT_TEST"):
+        return LlmResponse(
+            content=types.Content(
+                role="model",
+                parts=[types.Part.from_text(text="Novelty Score: 8/10. Commercial Impact: 9/10. Prior art lookup returned no matching blockers. Recommended for patent filing.")]
+            )
+        )
+    return None
+
+
+# LLM node for assessing patent prior art and scoring novelty
 llm_reviewer = LlmAgent(
     name="llm_reviewer",
     model=Gemini(model=Config.MODEL),
     instruction=(
-        "You are an AI risk assessor for expense reports. Review the provided expense details "
-        "and determine if there are any risk factors (e.g. mismatch between category and description, "
-        "suspicious submitter/amounts, unusual dates, etc.). "
-        "Generate a structured risk assessment containing a risk score from 1 (low) to 10 (high), "
-        "a list of risk factors, and a brief explanation."
+        "You are an expert AI patent reviewer and intellectual property (IP) analyst. "
+        "Review the provided innovation submission details. "
+        "You MUST call the check_prior_art tool to check if the submission title or technology "
+        "has prior art matches in the database. "
+        "Analyze the novelty and potential commercial impact of the technology based on the tool's findings. "
+        "Write a detailed technical evaluation containing: "
+        "1. Novelty Assessment (Novelty Score out of 10) "
+        "2. Commercial Impact Score (out of 10) "
+        "3. Prior Art Check results "
+        "4. Flagged Technical Risks "
+        "5. Final Filing Recommendation."
     ),
-    output_schema=RiskAnalysis,
-    output_key="risk_analysis",
+    tools=[check_prior_art],
+    output_key="innovation_analysis",
+    before_model_callback=mock_before_model
 )
 
 
 @node(rerun_on_resume=True)
 async def human_review(ctx: Context, node_input: Any):
-    """Interrupts the workflow to wait for manual human decision."""
-    expense_dict = ctx.state.get("expense")
-    if not expense_dict:
-        raise ValueError("Expense details not found in state context.")
-    expense = ExpenseDetails(**expense_dict)
+    """Interrupts the workflow to wait for manual decision from corporate IP Counsel."""
+    submission_dict = ctx.state.get("submission")
+    if not submission_dict:
+        raise ValueError("Submission details not found in state context.")
+    submission = SubmissionDetails(**submission_dict)
 
     is_security_event = ctx.state.get("is_security_event", False)
     redacted_types = ctx.state.get("redacted_types", [])
+    security_reasons = ctx.state.get("security_reasons", [])
 
     if not ctx.resume_inputs or "human_approval" not in ctx.resume_inputs:
         message_parts = []
         if is_security_event:
             message_parts.append(
-                "🚨 SECURITY WARNING: Potential prompt injection detected in the expense description!\n"
-                "The LLM reviewer has been bypassed for safety. Manual review is required.\n"
+                "🚨 SECURITY / COMPLIANCE WARNING: Potential risk detected in this submission!\n"
+                "The LLM reviewer has been bypassed for safety. Manual IP Counsel review is required.\n"
             )
+            if security_reasons:
+                message_parts.append("Flagged Violation Details:")
+                for reason in security_reasons:
+                    message_parts.append(f"- {reason}")
+                message_parts.append("")
         else:
-            message_parts.append("⚠️ ALERT: Expense report requires manual approval.\n")
+            message_parts.append("⚠️ ALERT: Innovation submission requires review and filing decision.\n")
             
         message_parts.append(
-            f"Submitter: {expense.submitter}\n"
-            f"Amount: ${expense.amount:.2f}\n"
-            f"Category: {expense.category}\n"
-            f"Description: {expense.description}\n"
-            f"Date: {expense.date}"
+            f"Title: {submission.title}\n"
+            f"Submitter: {submission.submitter} ({submission.department})\n"
+            f"Description: {submission.description}\n"
+            f"Libraries Used: {', '.join(submission.libraries_used) if submission.libraries_used else 'None'}\n"
+            f"Date: {submission.date}"
         )
         
         if redacted_types:
-            message_parts.append(f"\n🔐 Redacted PII categories: {', '.join(redacted_types)}")
+            message_parts.append(f"\n🔐 Redacted PII/Secrets: {', '.join(redacted_types)}")
             
         if not is_security_event:
-            # If clean, node_input will be the RiskAnalysis output from llm_reviewer
-            if isinstance(node_input, dict):
-                risk = RiskAnalysis(**node_input)
-            else:
-                risk = node_input
-                
+            # If clean, display the LLM's prior-art analysis report
+            analysis_report = ctx.state.get("innovation_analysis") or str(node_input)
             message_parts.append(
-                f"\nRisk Analysis:\n"
-                f"- Score: {risk.risk_score}/10\n"
-                f"- Factors: {', '.join(risk.risk_factors) if risk.risk_factors else 'None'}\n"
-                f"- Explanation: {risk.explanation}"
+                f"\n--- AI Patent Analysis & Prior-Art Report ---\n"
+                f"{analysis_report}"
             )
             
-        message_parts.append("\nPlease approve or reject this expense.")
+        message_parts.append("\nPlease approve or reject this submission for patent filing.")
         
         yield RequestInput(
             interrupt_id="human_approval",
@@ -377,19 +464,20 @@ async def human_review(ctx: Context, node_input: Any):
 
     # Process response once resumed
     decision_input = ctx.resume_inputs["human_approval"]
+    comment = ""
     if isinstance(decision_input, dict):
         decision_text = str(decision_input.get("decision", "")).strip().upper()
+        comment = str(decision_input.get("comment", "")).strip()
     else:
         decision_text = str(decision_input).strip().upper()
 
     if "APPROVE" in decision_text or "YES" in decision_text:
-        status = "APPROVED"
-        reason = "Manually approved by human reviewer."
+        status = "APPROVED_FOR_FILING"
+        reason = f"Approved for filing by IP Counsel. Comment: {comment}" if comment else "Approved for filing by IP Counsel."
     elif "REJECT" in decision_text or "NO" in decision_text:
         status = "REJECTED"
-        reason = "Manually rejected by human reviewer."
+        reason = f"Rejected by IP Counsel. Comment: {comment}" if comment else "Rejected by IP Counsel."
     else:
-        # Prompt again if answer is invalid
         message = f"Invalid response '{decision_text}'. Please reply with 'APPROVE' or 'REJECT'."
         yield RequestInput(
             interrupt_id="human_approval",
@@ -398,16 +486,12 @@ async def human_review(ctx: Context, node_input: Any):
         )
         return
 
-    # Extract risk analysis if it was evaluated
-    risk_analysis_dict = ctx.state.get("risk_analysis")
-    risk_analysis = RiskAnalysis(**risk_analysis_dict) if risk_analysis_dict else None
-
     yield Event(
         output={
             "status": status,
             "reason": reason,
-            "expense": expense,
-            "risk_analysis": risk_analysis,
+            "submission": submission,
+            "innovation_analysis": ctx.state.get("innovation_analysis", "Bypassed due to safety flag."),
             "redacted_types": redacted_types,
             "is_security_event": is_security_event
         },
@@ -416,32 +500,25 @@ async def human_review(ctx: Context, node_input: Any):
 
 
 def record_outcome(node_input: dict) -> WorkflowOutput:
-    """Constructs and records the final outcome after manual approval/rejection."""
-    expense_data = node_input["expense"]
-    risk_data = node_input["risk_analysis"]
+    """Constructs and records the final outcome after manual IP counsel decision."""
+    submission_data = node_input["submission"]
+    analysis_text = node_input["innovation_analysis"]
 
-    if isinstance(expense_data, dict):
-        expense = ExpenseDetails(**expense_data)
+    if isinstance(submission_data, dict):
+        submission = SubmissionDetails(**submission_data)
     else:
-        expense = expense_data
-
-    if risk_data:
-        if isinstance(risk_data, dict):
-            risk = RiskAnalysis(**risk_data)
-        else:
-            risk = risk_data
-    else:
-        risk = None
+        submission = submission_data
 
     return WorkflowOutput(
-        amount=expense.amount,
-        submitter=expense.submitter,
-        category=expense.category,
-        description=expense.description,
-        date=expense.date,
+        title=submission.title,
+        submitter=submission.submitter,
+        department=submission.department,
+        description=submission.description,
+        libraries_used=submission.libraries_used,
+        date=submission.date,
         status=node_input["status"],
         reason=node_input["reason"],
-        risk_analysis=risk,
+        innovation_analysis=analysis_text,
         redacted_types=node_input["redacted_types"],
         is_security_event=node_input["is_security_event"]
     )
@@ -450,14 +527,14 @@ def record_outcome(node_input: dict) -> WorkflowOutput:
 # --- Workflow Graph Definition ---
 
 root_agent = Workflow(
-    name="expense_approval_workflow",
-    description="Workflow that handles expense reports, auto-approving under $100 and utilizing LLM & Human review for $100+",
+    name="innovation_screening_workflow",
+    description="Workflow that handles corporate innovation submissions, auto-rejecting invalid entries, checking for license compliance/prompt injection, analyzing prior art, and utilizing HITL for filing decisions.",
     input_schema=None,
     state_schema=WorkflowState,
     output_schema=WorkflowOutput,
     edges=[
-        ("START", parse_expense),
-        (parse_expense, {"auto_approve": auto_approve, "llm_review": security_checkpoint}),
+        ("START", parse_submission),
+        (parse_submission, {"fast_reject": fast_reject, "security_gate": security_checkpoint}),
         (security_checkpoint, {"clean": llm_reviewer, "security_flagged": human_review}),
         (llm_reviewer, human_review),
         (human_review, record_outcome),

@@ -130,13 +130,14 @@ def test_chat_stream(server_fixture: subprocess.Popen[str]) -> None:
     logger.info(f"Session creation response: {session_response.json()}")
     session_id = session_response.json()["id"]
 
-    # Then send chat message
+    # Send a clean submission to trigger the workflow LLM node and subsequent Human Review pause
     input_data = {
         "data": {
-            "amount": 250.00,
+            "title": "Quantum Routing Protocol",
             "submitter": "Alice",
-            "category": "Meals",
-            "description": "Client dinner discussion",
+            "department": "R&D",
+            "description": "A novel routing protocol designed to speed up packet header processing in quantum networks.",
+            "libraries_used": ["numpy"],
             "date": "2026-07-01"
         }
     }
