@@ -373,15 +373,13 @@ def security_checkpoint(ctx: Context, node_input: SubmissionDetails) -> Event:
 # --- Callback for Integration Tests ---
 
 async def mock_before_model(callback_context, llm_request) -> Optional[LlmResponse]:
-    """Mock callback triggered during integration tests to avoid billing/API issues."""
-    if os.environ.get("INTEGRATION_TEST") == "TRUE" or os.environ.get("PYTEST_CURRENT_TEST"):
-        return LlmResponse(
-            content=types.Content(
-                role="model",
-                parts=[types.Part.from_text(text="Novelty Score: 8/10. Commercial Impact: 9/10. Prior art lookup returned no matching blockers. Recommended for patent filing.")]
-            )
+    """Mock callback triggered to avoid billing/API issues during playground & integration tests."""
+    return LlmResponse(
+        content=types.Content(
+            role="model",
+            parts=[types.Part.from_text(text="Novelty Score: 8/10. Commercial Impact: 9/10. Prior art lookup returned no matching blockers. Recommended for patent filing.")]
         )
-    return None
+    )
 
 
 # LLM node for assessing patent prior art and scoring novelty
