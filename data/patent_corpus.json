@@ -1,0 +1,296 @@
+[
+  {
+    "patent_id": "US9123456B2",
+    "title": "Distributed Ledger Consensus and Secondary Supervisor Arbitration",
+    "abstract": "A decentralized consensus mechanism that integrates secondary supervisor nodes to arbitrate conflict resolution in high-throughput ledger transactions, resolving partition lockouts in distributed databases.",
+    "domain_tag": "blockchain_consensus",
+    "filing_date": "2021-03-15"
+  },
+  {
+    "patent_id": "US9123457B2",
+    "title": "Zero-Knowledge Proof Transaction Validation in Proof-of-Stake Networks",
+    "abstract": "Methods for verifying zero-knowledge zk-SNARK cryptographic proofs within proof-of-stake blockchain validators to prevent double-spending without revealing sender identities.",
+    "domain_tag": "blockchain_consensus",
+    "filing_date": "2021-08-22"
+  },
+  {
+    "patent_id": "US9123458B2",
+    "title": "Byzantine Fault Tolerant Sharding Protocol for High-Scale Ledgers",
+    "abstract": "A dynamic sharding protocol for distributed ledgers that distributes transaction validation state across dynamic worker pools using Byzantine fault tolerance.",
+    "domain_tag": "blockchain_consensus",
+    "filing_date": "2022-01-10"
+  },
+  {
+    "patent_id": "US9123459B2",
+    "title": "Cross-Chain Atomic Swap Arbitration using Smart Contracts",
+    "abstract": "Cross-chain atomic exchange architecture utilizing hashed time-lock contracts (HTLC) and multi-signature supervisor keys across heterogeneous blockchain networks.",
+    "domain_tag": "blockchain_consensus",
+    "filing_date": "2022-05-18"
+  },
+  {
+    "patent_id": "US9123460B2",
+    "title": "Optimistic Rollup State Verification and Fraud Proof Generation",
+    "abstract": "Layer-2 scaling system utilizing optimistic rollup state transitions and interactive multi-round fraud proof challenges for distributed ledger settlement.",
+    "domain_tag": "blockchain_consensus",
+    "filing_date": "2023-02-14"
+  },
+  {
+    "patent_id": "US9123461B2",
+    "title": "Directed Acyclic Graph (DAG) Asynchronous Consensus Engine",
+    "abstract": "Asynchronous Byzantine fault tolerant consensus algorithm operating over directed acyclic graph data structures for micro-transaction settlement.",
+    "domain_tag": "blockchain_consensus",
+    "filing_date": "2023-09-01"
+  },
+  {
+    "patent_id": "US10987654B1",
+    "title": "Artificial Intelligence Prompt Injection Firewall and Input Filtering",
+    "abstract": "Systems and methods for detecting prompt injection, instruction overrides, and adversarial jailbreak attempts in large language model input streams using heuristic gates.",
+    "domain_tag": "ai_security",
+    "filing_date": "2022-04-11"
+  },
+  {
+    "patent_id": "US10987655B1",
+    "title": "Adversarial Perturbation Defense for Neural Network Classifiers",
+    "abstract": "Defensive distortion filtering and gradient masking to prevent adversarial perturbation attacks against deep neural network image and text classifiers.",
+    "domain_tag": "ai_security",
+    "filing_date": "2022-07-19"
+  },
+  {
+    "patent_id": "US10987656B1",
+    "title": "Generative AI Output Data Loss Prevention and PII Masking",
+    "abstract": "Real-time stream analyzer intercepting LLM token streams to redact personally identifiable information and proprietary token secrets prior to client rendering.",
+    "domain_tag": "ai_security",
+    "filing_date": "2023-01-08"
+  },
+  {
+    "patent_id": "US10987657B1",
+    "title": "Model Extraction Attack Mitigation via Logit Distortion",
+    "abstract": "Preventing model stealing and extraction attacks on proprietary inference APIs by injecting calibrated noise into output logit distributions.",
+    "domain_tag": "ai_security",
+    "filing_date": "2023-06-25"
+  },
+  {
+    "patent_id": "US10987658B1",
+    "title": "Differential Privacy Injection in Large Language Model Training",
+    "abstract": "Training framework applying differentially private stochastic gradient descent (DP-SGD) to prevent memorization of confidential training samples.",
+    "domain_tag": "ai_security",
+    "filing_date": "2023-11-12"
+  },
+  {
+    "patent_id": "US10987659B1",
+    "title": "Agentic AI Permission Boundary and Sandbox Access Enforcement",
+    "abstract": "Autonomous agent runtime environment enforcing strict tool permission scopes and system call sandboxing to contain unintended actions.",
+    "domain_tag": "ai_security",
+    "filing_date": "2024-03-04"
+  },
+  {
+    "patent_id": "US11234567B2",
+    "title": "Quantum Packet Header Processing and Network Routing Protocol",
+    "abstract": "Routing protocol and hardware architecture for quantum networks that speeds up packet header processing and entanglement distribution across optical channels.",
+    "domain_tag": "quantum_networking",
+    "filing_date": "2021-11-03"
+  },
+  {
+    "patent_id": "US11234568B2",
+    "title": "Photonic Entanglement Swapping for Long-Distance Quantum Repeater",
+    "abstract": "Entanglement swapping apparatus for quantum repeaters using dual-rail photonic qubits to extend quantum key distribution distances over fiber networks.",
+    "domain_tag": "quantum_networking",
+    "filing_date": "2022-03-14"
+  },
+  {
+    "patent_id": "US11234569B2",
+    "title": "Quantum Key Distribution Protocol with Decoy State Modulation",
+    "abstract": "Quantum key distribution system modulating phase and decoy states to mitigate photon-number-splitting attacks in quantum communications.",
+    "domain_tag": "quantum_networking",
+    "filing_date": "2022-09-30"
+  },
+  {
+    "patent_id": "US11234570B2",
+    "title": "Fault-Tolerant Surface Code Routing in Superconducting Qubits",
+    "abstract": "Logical qubit routing framework operating surface codes over topological superconducting qubit arrays to maintain low error rates during quantum gate execution.",
+    "domain_tag": "quantum_networking",
+    "filing_date": "2023-04-17"
+  },
+  {
+    "patent_id": "US11234571B2",
+    "title": "Cryogenic Optical Modulator for Quantum Control Signal Routing",
+    "abstract": "Ultra-low power cryogenic electro-optic modulator array routing microwave control pulses to superconducting quantum processing units.",
+    "domain_tag": "quantum_networking",
+    "filing_date": "2023-10-05"
+  },
+  {
+    "patent_id": "US11234572B2",
+    "title": "Distributed Quantum Memory Buffer Allocation for Optical Nodes",
+    "abstract": "Dynamic memory allocation algorithm managing atomic ensemble quantum memories across optical network switches to synchronize entangled photons.",
+    "domain_tag": "quantum_networking",
+    "filing_date": "2024-01-20"
+  },
+  {
+    "patent_id": "US10456789B1",
+    "title": "Automated Cloud File Synchronization and Encrypted S3 Backup Storage",
+    "abstract": "A background service monitoring local filesystem events and executing delta synchronization to S3-compatible cloud storage buckets using client-side encryption.",
+    "domain_tag": "cloud_storage",
+    "filing_date": "2020-09-12"
+  },
+  {
+    "patent_id": "US10456790B1",
+    "title": "Deduplicated Block-Level Cloud Storage Compression Engine",
+    "abstract": "Content-defined chunking and hash deduplication algorithm reducing storage footprint across multi-tenant cloud object stores.",
+    "domain_tag": "cloud_storage",
+    "filing_date": "2021-02-28"
+  },
+  {
+    "patent_id": "US10456791B1",
+    "title": "Client-Side Zero-Knowledge Encryption for Cloud File Tiering",
+    "abstract": "Hierarchical key derivation scheme allowing client endpoints to tier cold files to cloud storage without disclosing decryption keys to host providers.",
+    "domain_tag": "cloud_storage",
+    "filing_date": "2021-06-17"
+  },
+  {
+    "patent_id": "US10456792B1",
+    "title": "Asynchronous Distributed Snapshot Synchronization for Object Stores",
+    "abstract": "Point-in-time snapshot replication mechanism broadcasting incremental object delta logs across geo-replicated cloud storage clusters.",
+    "domain_tag": "cloud_storage",
+    "filing_date": "2022-01-22"
+  },
+  {
+    "patent_id": "US10456793B1",
+    "title": "Multi-Cloud Storage Abstraction Layer with Dynamic Cost Optimization",
+    "abstract": "Virtual file system middleware automatically routing object storage writes across cloud vendors based on latency, tier pricing, and egress costs.",
+    "domain_tag": "cloud_storage",
+    "filing_date": "2022-08-09"
+  },
+  {
+    "patent_id": "US10456794B1",
+    "title": "Self-Healing Distributed Storage Architecture using Erasure Coding",
+    "abstract": "Reed-Solomon erasure coding management system continuously detecting degraded storage drives and reconstructing lost data fragments in background worker nodes.",
+    "domain_tag": "cloud_storage",
+    "filing_date": "2023-05-30"
+  },
+  {
+    "patent_id": "US8555222B2",
+    "title": "Automated Corporate Expense Audit Workflow",
+    "abstract": "An automated system for processing financial receipts, evaluating corporate policy compliance, and executing auto-approvals based on spending thresholds.",
+    "domain_tag": "expense_auditing",
+    "filing_date": "2019-04-05"
+  },
+  {
+    "patent_id": "US8555223B2",
+    "title": "Optical Character Recognition and Receipt Line-Item Disambiguation",
+    "abstract": "Machine learning system extracting merchant metadata, tax rates, and line-item breakdowns from low-resolution digital receipt images.",
+    "domain_tag": "expense_auditing",
+    "filing_date": "2019-10-18"
+  },
+  {
+    "patent_id": "US8555224B2",
+    "title": "Automated Anomaly Detection in Corporate Credit Card Transactions",
+    "abstract": "Unsupervised clustering algorithms detecting fraudulent transactions, duplicate reimbursement claims, and out-of-policy employee expenditure patterns.",
+    "domain_tag": "expense_auditing",
+    "filing_date": "2020-05-11"
+  },
+  {
+    "patent_id": "US8555225B2",
+    "title": "Multi-Level Organizational Hierarchy Expenditure Approval Engine",
+    "abstract": "Workflow engine dynamically routing approval requests through manager chains based on authorization limits and department budgets.",
+    "domain_tag": "expense_auditing",
+    "filing_date": "2021-01-14"
+  },
+  {
+    "patent_id": "US8555226B2",
+    "title": "Automated Foreign Currency Conversion and Tax Reconciliation",
+    "abstract": "Real-time currency exchange settlement engine reconciling multi-currency corporate travel expenses against global tax compliance rules.",
+    "domain_tag": "expense_auditing",
+    "filing_date": "2021-07-29"
+  },
+  {
+    "patent_id": "US8555227B2",
+    "title": "Real-Time Per-Diem Subsistence Allowance Compliance Monitoring",
+    "abstract": "Location-aware mobile service calculating meal and lodging per-diem caps against regional government reimbursement standards.",
+    "domain_tag": "expense_auditing",
+    "filing_date": "2022-03-03"
+  },
+  {
+    "patent_id": "US9876543B2",
+    "title": "Homomorphic Cryptographic Key Exchange for Distributed Databases",
+    "abstract": "Methods for conducting secure key exchanges across untrusted network nodes enabling zero-knowledge queries against homomorphically encrypted database tables.",
+    "domain_tag": "cryptography",
+    "filing_date": "2020-11-20"
+  },
+  {
+    "patent_id": "US9876544B2",
+    "title": "Post-Quantum Lattice-Based Key Encapsulation Mechanism",
+    "abstract": "Post-quantum cryptographic scheme utilizing learning-with-errors (LWE) lattice problems to establish secure session keys against quantum computer attacks.",
+    "domain_tag": "cryptography",
+    "filing_date": "2021-04-12"
+  },
+  {
+    "patent_id": "US9876545B2",
+    "title": "Threshold Signature Cryptography for Decentralized Key Custody",
+    "abstract": "Multi-party computation (MPC) threshold signature algorithm distributing private key shares across independent vault nodes without reconstructing the full key.",
+    "domain_tag": "cryptography",
+    "filing_date": "2021-10-09"
+  },
+  {
+    "patent_id": "US9876546B2",
+    "title": "Hardware Security Module (HSM) Key Derivation in Untrusted Environments",
+    "abstract": "Tamper-resistant enclave apparatus isolating cryptographic master keys and performing side-channel protected digital signatures.",
+    "domain_tag": "cryptography",
+    "filing_date": "2022-06-04"
+  },
+  {
+    "patent_id": "US9876547B2",
+    "title": "Verifiable Random Function (VRF) Generation for Cryptographic Elections",
+    "abstract": "Cryptographic primitive producing verifiable pseudo-random numbers with non-interactive proof of correctness for un-manipulable leader selection.",
+    "domain_tag": "cryptography",
+    "filing_date": "2023-01-19"
+  },
+  {
+    "patent_id": "US9876548B2",
+    "title": "Searchable Symmetric Encryption for Multi-Tenant Database Columns",
+    "abstract": "Symmetric encryption scheme allowing SQL substring queries against ciphertext database indexes without decrypting data server-side.",
+    "domain_tag": "cryptography",
+    "filing_date": "2023-08-11"
+  },
+  {
+    "patent_id": "US7654321B2",
+    "title": "Precision Soil Moisture Sensing and Automated Drip Irrigation System",
+    "abstract": "Agricultural sensor array measuring soil water tension and ambient humidity to dynamically control solar-powered solenoid drip irrigation valves.",
+    "domain_tag": "agricultural_irrigation",
+    "filing_date": "2018-06-12"
+  },
+  {
+    "patent_id": "US7654322B2",
+    "title": "Subsurface Drip Irrigation Valve Management using Evapotranspiration Models",
+    "abstract": "Crop canopy sensor network computing daily evapotranspiration rates to optimize subsurface root-zone water delivery schedules.",
+    "domain_tag": "agricultural_irrigation",
+    "filing_date": "2019-02-20"
+  },
+  {
+    "patent_id": "US7654323B2",
+    "title": "Autonomous Drone Multispectral Imaging for Crop Irrigation Scheduling",
+    "abstract": "Unmanned aerial vehicle capturing multispectral vegetation index imagery to detect field water stress and trigger localized sprinkler pivots.",
+    "domain_tag": "agricultural_irrigation",
+    "filing_date": "2019-09-05"
+  },
+  {
+    "patent_id": "US7654324B2",
+    "title": "Closed-Loop Hydroponic Nutrient Dosing and Salinity Monitoring",
+    "abstract": "Automated greenhouse water recirculating system measuring electro-conductivity and pH levels to inject micro-nutrient solutions into crop beds.",
+    "domain_tag": "agricultural_irrigation",
+    "filing_date": "2020-04-14"
+  },
+  {
+    "patent_id": "US7654325B2",
+    "title": "Solar-Powered Wireless Mesh Sensor Network for Vineyard Moisture Tracking",
+    "abstract": "Low-power LoRaWAN sensor nodes installed across vineyard topographies transmitting soil moisture profiles to central irrigation controllers.",
+    "domain_tag": "agricultural_irrigation",
+    "filing_date": "2021-01-22"
+  },
+  {
+    "patent_id": "US7654326B2",
+    "title": "Variable Rate Center Pivot Sprinkler Control using Thermal Canopy Mapping",
+    "abstract": "Center pivot irrigation apparatus featuring individually addressable nozzle solenoids regulated by real-time infrared canopy temperature sensors.",
+    "domain_tag": "agricultural_irrigation",
+    "filing_date": "2022-07-09"
+  }
+]

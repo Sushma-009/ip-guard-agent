@@ -379,20 +379,34 @@ async def mock_before_model(callback_context, llm_request) -> Optional[LlmRespon
                         query = p.text[:200]
                         break
 
-    rag_result = search_prior_art_vectors(query, top_k=2)
+    rag_result = search_prior_art_vectors(query, top_k=3)
     matches = rag_result.get("matches", [])
     
+    # Task 2: Check for HIGH_CONFLICT match
+    has_high_conflict = any(m.get("similarity_tier") == "HIGH_CONFLICT" for m in matches)
+    has_moderate_overlap = any(m.get("similarity_tier") == "MODERATE_OVERLAP" for m in matches)
+    
+    if has_high_conflict:
+        novelty_score = 3  # High conflict enforces score <= 4/10
+    elif has_moderate_overlap:
+        novelty_score = 6
+    else:
+        novelty_score = 9
+
     if matches:
-        match_summary = "\n".join([f"- Patent {m['patent_id']} ('{m['title']}'): Vector Similarity {m['similarity_score']*100:.1f}%" for m in matches])
+        match_summary = "\n".join([
+            f"- Patent {m['patent_id']} ('{m['title']}'): [{m['similarity_tier']}] Raw Similarity {m['raw_similarity_score']*100:.1f}%"
+            for m in matches
+        ])
         report = (
-            f"Novelty Assessment (Novelty Score: 7/10). Commercial Impact: 8/10.\n"
-            f"ChromaDB Prior Art Vector Matches Found:\n{match_summary}\n"
+            f"Novelty Assessment (Novelty Score: {novelty_score}/10). Commercial Impact: 8/10.\n"
+            f"ChromaDB Prior Art Calibrated Vector Tiers:\n{match_summary}\n"
             f"Recommendation: Review patent scope against retrieved prior-art vector matches."
         )
     else:
         report = (
             "Novelty Assessment (Novelty Score: 9/10). Commercial Impact: 9/10.\n"
-            "ChromaDB Vector Search: No matching prior-art patents found (Cosine similarity < 0.45).\n"
+            "ChromaDB Vector Search: No matching prior-art patents found (Tier: NOT_RELEVANT).\n"
             "Recommendation: High novelty score. Recommended for patent filing."
         )
 
@@ -414,6 +428,9 @@ llm_reviewer = LlmAgent(
         "You MUST call the check_prior_art tool to check if the submission title or technology "
         "has prior art matches in the database. "
         "Analyze the novelty and potential commercial impact of the technology based on the tool's findings. "
+        "Treat HIGH_CONFLICT matches as strong evidence against novelty (Novelty Score must be <= 4/10). "
+        "Treat MODERATE_OVERLAP as partial evidence requiring justification if score is above 6/10. "
+        "Ignore NOT_RELEVANT matches entirely — do not mention them in your reasoning. "
         "Write a detailed technical evaluation containing: "
         "1. Novelty Assessment (Novelty Score out of 10) "
         "2. Commercial Impact Score (out of 10) "

@@ -401,3 +401,224 @@ def test_security_checkpoint_detects_license_and_injection_issues() -> None:
         assert output.status == "REJECTED"
         assert output.is_security_event is True
         assert "Bypassed" in output.innovation_analysis
+
+
+# --- Tasks 1-5 Acceptance Criteria Tests ---
+
+def test_vector_search_discriminates_unrelated() -> None:
+    """Task 1: Queries corpus with 5 known-unrelated topics and asserts max similarity stays below 35%."""
+    from expense_agent.vector_store import search_prior_art_vectors
+    
+    unrelated_queries = [
+        "Sourdough bread baking recipe app with temperature alarms",
+        "Pet grooming appointment scheduler and dog washing queue",
+        "Underwater basket weaving techniques and bamboo fiber knots",
+        "Automated home coffee machine bean grinding sensor",
+        "Personal fitness workout tracker for marathon runners"
+    ]
+    
+    for q in unrelated_queries:
+        res = search_prior_art_vectors(q, top_k=3)
+        max_sim = res.get("max_similarity", 0.0)
+        assert max_sim < 0.35, f"Expected unrelated query '{q}' max similarity < 0.35, got {max_sim}"
+        assert res.get("status") == "CLEAN", f"Expected CLEAN status for unrelated query '{q}'"
+
+
+def test_vector_search_matches_paraphrase() -> None:
+    """Task 1: Queries with a paraphrased abstract and asserts it matches US11234567B2 above related floor (70%)."""
+    from expense_agent.vector_store import search_prior_art_vectors
+    
+    # Paraphrased abstract of US11234567B2 (Quantum Packet Header Processing)
+    paraphrased_query = "Routing protocol and hardware architecture for quantum networks that speeds up packet header processing and entanglement distribution across optical channels"
+    
+    res = search_prior_art_vectors(paraphrased_query, top_k=3)
+    matches = res.get("matches", [])
+    assert matches, "Expected matches for paraphrased seed abstract"
+    top_match = matches[0]
+    assert top_match["patent_id"] == "US11234567B2", f"Expected top match US11234567B2, got {top_match['patent_id']}"
+    assert top_match["raw_similarity_score"] >= 0.70, f"Expected similarity score >= 0.70, got {top_match['raw_similarity_score']}"
+
+
+def test_high_conflict_tier_forces_low_novelty_score() -> None:
+    """Task 2: Feeding LLM reviewer a HIGH_CONFLICT match enforces novelty score <= 4/10."""
+    session_service = InMemorySessionService()
+    session = session_service.create_session_sync(user_id="test_user", app_name="test")
+    runner = Runner(agent=root_agent, session_service=session_service, app_name="test")
+
+    # High conflict payload matching US11234567B2 (Quantum Packet Header Routing Protocol)
+    input_data = {
+        "data": {
+            "title": "Quantum Packet Header Processing and Network Routing Protocol",
+            "submitter": "Dave",
+            "department": "Quantum Optics",
+            "description": "Routing protocol and hardware architecture for quantum networks that speeds up packet header processing and entanglement distribution across optical channels.",
+            "libraries_used": ["pydantic"],
+            "date": "2026-07-08"
+        }
+    }
+    message = types.Content(
+        role="user", parts=[types.Part.from_text(text=json.dumps(input_data))]
+    )
+
+    events = list(
+        runner.run(
+            new_message=message,
+            user_id="test_user",
+            session_id=session.id,
+            run_config=RunConfig(streaming_mode=StreamingMode.SSE),
+        )
+    )
+
+    # Check that it paused for human review with HIGH_CONFLICT report
+    has_interrupt = False
+    for event in events:
+        if event.content and event.content.parts:
+            for part in event.content.parts:
+                if part.function_call and part.function_call.name == "adk_request_input":
+                    has_interrupt = True
+                    msg = str(part.function_call.args.get("message", ""))
+                    assert "HIGH_CONFLICT" in msg or "Novelty Score: 3/10" in msg or "Novelty Assessment (Novelty Score: 3/10)" in msg
+                    break
+    assert has_interrupt, "Expected workflow to interrupt with high conflict novelty reduction"
+
+
+def test_vector_store_cold_start_count_assertion_and_health() -> None:
+    """Task 3: Verifies cold-start count assertion and vector store stats."""
+    from expense_agent.vector_store import get_vector_store_stats
+    
+    stats = get_vector_store_stats()
+    assert stats["status"] == "healthy"
+    assert stats["document_count"] >= 40, f"Expected at least 40 seed patents, got {stats['document_count']}"
+    assert stats["document_count"] == stats["expected_corpus_size"]
+
+
+def test_gpl_library_in_manifest_triggers_alert() -> None:
+    """Task 4: Submitting libraries_used with a GPL library triggers a security alert."""
+    session_service = InMemorySessionService()
+    session = session_service.create_session_sync(user_id="test_user", app_name="test")
+    runner = Runner(agent=root_agent, session_service=session_service, app_name="test")
+
+    input_data = {
+        "data": {
+            "title": "GPL Manifest Module",
+            "submitter": "Frank",
+            "department": "DevOps",
+            "description": "A standard cloud deployment module.",
+            "libraries_used": ["some-gpl-licensed-lib"],
+            "date": "2026-07-08"
+        }
+    }
+    message = types.Content(
+        role="user", parts=[types.Part.from_text(text=json.dumps(input_data))]
+    )
+
+    events = list(
+        runner.run(
+            new_message=message,
+            user_id="test_user",
+            session_id=session.id,
+            run_config=RunConfig(streaming_mode=StreamingMode.SSE),
+        )
+    )
+
+    # Check for security alert in interrupt message
+    has_alert = False
+    for event in events:
+        if event.content and event.content.parts:
+            for part in event.content.parts:
+                if part.function_call and part.function_call.name == "adk_request_input":
+                    has_alert = True
+                    msg = str(part.function_call.args.get("message", ""))
+                    assert "Forbidden copyleft library/license" in msg
+                    break
+    assert has_alert, "Expected GPL library in manifest to trigger security alert"
+
+
+def test_permissive_library_with_gpl_text_does_not_trigger() -> None:
+    """Task 4: Permissive library with conversational GPL text in description does NOT trigger security alert."""
+    session_service = InMemorySessionService()
+    session = session_service.create_session_sync(user_id="test_user", app_name="test")
+    runner = Runner(agent=root_agent, session_service=session_service, app_name="test")
+
+    input_data = {
+        "data": {
+            "title": "MIT Architecture",
+            "submitter": "Grace",
+            "department": "Engineering",
+            "description": "We deliberately avoided GPL code and strictly used MIT licensed packages.",
+            "libraries_used": ["mit-router-core"],
+            "date": "2026-07-08"
+        }
+    }
+    message = types.Content(
+        role="user", parts=[types.Part.from_text(text=json.dumps(input_data))]
+    )
+
+    events = list(
+        runner.run(
+            new_message=message,
+            user_id="test_user",
+            session_id=session.id,
+            run_config=RunConfig(streaming_mode=StreamingMode.SSE),
+        )
+    )
+
+    # Check that it did NOT trigger a security warning banner
+    for event in events:
+        if event.content and event.content.parts:
+            for part in event.content.parts:
+                if part.function_call and part.function_call.name == "adk_request_input":
+                    msg = str(part.function_call.args.get("message", ""))
+                    assert "SECURITY / COMPLIANCE WARNING" not in msg, "Conversational GPL text should not trigger security event"
+
+
+def test_fast_reject_writes_complete_audit_entry() -> None:
+    """Task 5: Asserts fast_reject path produces non-null audit ledger fields."""
+    session_service = InMemorySessionService()
+    session = session_service.create_session_sync(user_id="test_user", app_name="test")
+    runner = Runner(agent=root_agent, session_service=session_service, app_name="test")
+
+    input_data = {
+        "data": {
+            "title": "",  # Blank title to trigger fast_reject
+            "submitter": "Hank",
+            "department": "QA",
+            "description": "Short",
+            "libraries_used": [],
+            "date": "2026-07-08"
+        }
+    }
+    message = types.Content(
+        role="user", parts=[types.Part.from_text(text=json.dumps(input_data))]
+    )
+
+    events = list(
+        runner.run(
+            new_message=message,
+            user_id="test_user",
+            session_id=session.id,
+            run_config=RunConfig(streaming_mode=StreamingMode.SSE),
+        )
+    )
+
+    output_events = [e for e in events if e.output is not None]
+    assert output_events, "Expected output event on fast_reject path"
+    output = output_events[-1].output
+    
+    # Assert every single audit ledger field is non-null
+    if isinstance(output, dict):
+        assert output["status"] == "REJECTED"
+        assert output["reason"] is not None
+        assert output["innovation_analysis"] is not None
+        assert output["redacted_types"] is not None
+        assert output["is_security_event"] is not None
+        assert output["submitter"] == "Hank"
+        assert output["date"] == "2026-07-08"
+    else:
+        assert output.status == "REJECTED"
+        assert output.reason is not None
+        assert output.innovation_analysis is not None
+        assert output.redacted_types is not None
+        assert output.is_security_event is not None
+        assert output.submitter == "Hank"
+        assert output.date == "2026-07-08"

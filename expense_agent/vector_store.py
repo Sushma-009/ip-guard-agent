@@ -1,8 +1,17 @@
 # Copyright 2026 Google LLC
 # Licensed under the Apache License, Version 2.0 (the "License");
 
+import json
+import os
 import chromadb
-from typing import List, Dict, Any
+from typing import List, Dict, Any, Tuple
+
+# Path to corpus dataset
+_CORPUS_PATH = os.path.join(
+    os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
+    "data",
+    "patent_corpus.json"
+)
 
 # Initialize lightweight in-memory ChromaDB client
 _chroma_client = chromadb.Client()
@@ -16,60 +25,79 @@ except Exception:
         metadata={"hnsw:space": "cosine"}
     )
 
-# Seed USPTO Patent Abstract Dataset
-_SEED_PATENTS = [
-    {
-        "id": "US9123456B2",
-        "title": "Distributed Ledger Consensus and Secondary Supervisor Arbitration",
-        "abstract": "A decentralized consensus mechanism that integrates secondary supervisor nodes to arbitrate conflict resolution in high-throughput ledger transactions, resolving partition lockouts.",
-        "category": "Blockchain & Distributed Systems"
-    },
-    {
-        "id": "US10987654B1",
-        "title": "Artificial Intelligence Prompt Injection Firewall and Input Filtering",
-        "abstract": "Systems and methods for detecting prompt injection, instruction overrides, and adversarial jailbreak attempts in large language model input streams using heuristic gates.",
-        "category": "AI & LLM Security"
-    },
-    {
-        "id": "US8555222B2",
-        "title": "Automated Corporate Expense Audit Workflow",
-        "abstract": "An automated system for processing financial receipts, evaluating corporate policy compliance, and executing auto-approvals based on spending thresholds.",
-        "category": "Financial Workflows"
-    },
-    {
-        "id": "US11234567B2",
-        "title": "Quantum Packet Header Processing and Network Routing Protocol",
-        "abstract": "Routing protocol and hardware architecture for quantum networks that speeds up packet header processing and entanglement distribution across optical channels.",
-        "category": "Quantum Networking"
-    },
-    {
-        "id": "US10456789B1",
-        "title": "Automated Cloud File Synchronization and Encrypted S3 Backup Storage",
-        "abstract": "A background service monitoring local filesystem events and executing delta synchronization to S3-compatible cloud storage buckets using client-side encryption.",
-        "category": "Cloud Infrastructure"
-    },
-    {
-        "id": "US9876543B2",
-        "title": "Homomorphic Cryptographic Key Exchange for Distributed Databases",
-        "abstract": "Methods for conducting secure key exchanges across untrusted network nodes enabling zero-knowledge queries against homomorphically encrypted database tables.",
-        "category": "Cryptography"
-    }
-]
+
+def load_corpus() -> List[Dict[str, Any]]:
+    """Loads versioned seed corpus from data/patent_corpus.json."""
+    if not os.path.exists(_CORPUS_PATH):
+        raise FileNotFoundError(f"Corpus dataset file missing at {_CORPUS_PATH}")
+    with open(_CORPUS_PATH, "r", encoding="utf-8") as f:
+        return json.load(f)
+
 
 def seed_vector_db():
-    """Seeds the ChromaDB vector database with USPTO patent abstracts if empty."""
-    if _collection.count() == 0:
-        documents = [p["abstract"] for p in _SEED_PATENTS]
-        metadatas = [{"id": p["id"], "title": p["title"], "category": p["category"]} for p in _SEED_PATENTS]
-        ids = [p["id"] for p in _SEED_PATENTS]
+    """Seeds ChromaDB vector database with USPTO patent abstracts from JSON corpus."""
+    corpus = load_corpus()
+    expected_count = len(corpus)
+    
+    current_count = _collection.count()
+    if current_count < expected_count:
+        documents = [p["abstract"] for p in corpus]
+        metadatas = [
+            {
+                "patent_id": p["patent_id"],
+                "title": p["title"],
+                "domain_tag": p["domain_tag"],
+                "filing_date": p.get("filing_date", "")
+            }
+            for p in corpus
+        ]
+        ids = [p["patent_id"] for p in corpus]
+        
         _collection.add(
             documents=documents,
             metadatas=metadatas,
             ids=ids
         )
+    
+    # Task 3: Cold-start startup assertion
+    final_count = _collection.count()
+    if final_count < expected_count:
+        raise RuntimeError(
+            f"Cold-start vector store seed assertion failed: expected at least {expected_count} patents, found {final_count}."
+        )
+
 
 # Seed immediately on module import
 seed_vector_db()
+
+
+def get_vector_store_stats() -> Dict[str, Any]:
+    """Returns vector store health metrics for /health/vector-store endpoint."""
+    corpus = load_corpus()
+    return {
+        "status": "healthy",
+        "document_count": _collection.count(),
+        "expected_corpus_size": len(corpus)
+    }
+
+
+def classify_similarity_tier(similarity_score: float) -> str:
+    """Task 2: Buckets cosine similarity scores into calibrated policy tiers.
+
+    Tiers:
+    - > 0.70          -> HIGH_CONFLICT (Strong evidence against novelty)
+    - 0.50 - 0.70     -> MODERATE_OVERLAP (Partial overlap requiring justification)
+    - 0.35 - 0.50     -> LOW_OVERLAP (Low similarity context)
+    - < 0.35          -> NOT_RELEVANT (Filtered out of LLM prompt)
+    """
+    if similarity_score >= 0.70:
+        return "HIGH_CONFLICT"
+    elif similarity_score >= 0.50:
+        return "MODERATE_OVERLAP"
+    elif similarity_score >= 0.35:
+        return "LOW_OVERLAP"
+    else:
+        return "NOT_RELEVANT"
 
 
 def search_prior_art_vectors(query: str, top_k: int = 3) -> Dict[str, Any]:
@@ -80,10 +108,10 @@ def search_prior_art_vectors(query: str, top_k: int = 3) -> Dict[str, Any]:
         top_k: Number of nearest matches to return.
 
     Returns:
-        Dict[str, Any]: Vector search results including patent IDs, similarity scores, and titles.
+        Dict[str, Any]: Vector search results including raw similarity scores, tier labels, and filtering.
     """
     if not query or not query.strip():
-        return {"status": "CLEAN", "matches": []}
+        return {"status": "CLEAN", "matches": [], "max_similarity": 0.0}
 
     results = _collection.query(
         query_texts=[query],
@@ -91,6 +119,8 @@ def search_prior_art_vectors(query: str, top_k: int = 3) -> Dict[str, Any]:
     )
 
     matches = []
+    max_similarity = 0.0
+    
     if results and results.get("ids") and results["ids"][0]:
         ids = results["ids"][0]
         distances = results["distances"][0] if "distances" in results and results["distances"] else [0.5] * len(ids)
@@ -98,20 +128,27 @@ def search_prior_art_vectors(query: str, top_k: int = 3) -> Dict[str, Any]:
         metadatas = results["metadatas"][0] if "metadatas" in results and results["metadatas"] else [{}] * len(ids)
 
         for i in range(len(ids)):
-            # Cosine distance to similarity conversion: similarity = 1 - distance
             dist = float(distances[i])
             similarity = max(0.0, min(1.0, round(1.0 - dist, 3)))
+            tier = classify_similarity_tier(similarity)
             
-            # Filter matches with similarity > 0.45 as relevant prior art
-            if similarity >= 0.45:
+            if similarity > max_similarity:
+                max_similarity = similarity
+            
+            # Exclude NOT_RELEVANT matches (< 0.35) from context output
+            if tier != "NOT_RELEVANT":
                 matches.append({
                     "patent_id": ids[i],
                     "title": metadatas[i].get("title", ""),
-                    "category": metadatas[i].get("category", ""),
-                    "similarity_score": similarity,
+                    "domain_tag": metadatas[i].get("domain_tag", ""),
+                    "raw_similarity_score": similarity,
+                    "similarity_tier": tier,
                     "abstract_snippet": documents[i][:150] + "..."
                 })
 
-    if matches:
-        return {"status": "MATCH_FOUND", "matches": matches}
-    return {"status": "CLEAN", "matches": []}
+    status = "MATCH_FOUND" if matches else "CLEAN"
+    return {
+        "status": status,
+        "matches": matches,
+        "max_similarity": max_similarity
+    }

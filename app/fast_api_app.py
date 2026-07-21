@@ -59,12 +59,19 @@ app: FastAPI = get_fast_api_app(
 app.title = "ambient-expense-agent"
 app.description = "API for interacting with the Agent ambient-expense-agent"
 
+from expense_agent.vector_store import get_vector_store_stats
+
 # Re-use the same session service database configuration as DevServer/ApiServer
 session_service = create_session_service_from_options(
     base_dir=AGENT_DIR,
     session_service_uri=session_service_uri,
     use_local_storage=True
 )
+
+@app.get("/health/vector-store")
+async def health_vector_store():
+    """Health check endpoint returning vector database status and document count."""
+    return get_vector_store_stats()
 
 # Global runner instance targeting the root agent
 runner = Runner(
