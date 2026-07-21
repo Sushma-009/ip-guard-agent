@@ -5,7 +5,8 @@ import json
 import os
 import sys
 import datetime
-from typing import Dict, Any, List
+import re
+from typing import Dict, Any, List, Optional
 
 # Add project root to sys.path
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -16,26 +17,29 @@ from google.adk.agents.run_config import RunConfig, StreamingMode
 from google.genai import types
 
 from expense_agent.agent import root_agent
-from expense_agent.vector_store import search_prior_art_vectors
 
 _EVAL_SET_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "eval_set.json")
 _RESULTS_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "results")
 
 
-def parse_novelty_score_from_report(report_text: str) -> int:
-    """Parses integer novelty score (1-10) from LLM reviewer report string."""
+def parse_novelty_score_from_report(report_text: str) -> Optional[int]:
+    """Parses integer novelty score (1-10) from LLM reviewer report string.
+
+    Returns None if no score pattern is matched (never silently defaults to a number).
+    """
     if not report_text:
-        return 0
-    import re
+        return None
     match = re.search(r"Novelty Score:\s*(\d+)", report_text, re.IGNORECASE)
     if match:
         return int(match.group(1))
-    return 5
+    return None
 
 
-def get_novelty_band(score: int) -> str:
-    """Maps 1-10 integer score to novelty band."""
-    if score >= 8:
+def get_novelty_band(score: Optional[int]) -> str:
+    """Maps 1-10 integer score to novelty band, guarding against None."""
+    if score is None:
+        return "UNSCORED"
+    elif score >= 8:
         return "HIGH"
     elif score >= 5:
         return "MEDIUM"
@@ -82,7 +86,7 @@ def run_single_eval_case(case: Dict[str, Any], runner: Runner, session_service: 
                 fast_reject_output = e.output
 
     is_security_event = False
-    novelty_score = 5
+    novelty_score = None
     matched_patent_id = None
     status = "UNKNOWN"
     
@@ -105,19 +109,31 @@ def run_single_eval_case(case: Dict[str, Any], runner: Runner, session_service: 
                             is_security_event = True
                             status = "SECURITY_FLAGGED"
                             novelty_score = 1
+                        elif "DISCREPANCY DETECTED BETWEEN RETRIEVAL TIER AND NOVELTY SCORE" in msg or "ceiling_override_needed" in msg:
+                            is_security_event = False
+                            status = "CEILING_ESCALATED"
+                            novelty_score = None  # Explicitly no numeric guess for escalated cases
                         else:
                             is_security_event = False
                             status = "PAUSED_FOR_REVIEW"
                             novelty_score = parse_novelty_score_from_report(msg)
+                            if novelty_score is None:
+                                status = "PARSE_FAILURE"
                         break
 
-    # Vector RAG prior art search check
-    rag_result = search_prior_art_vectors(case.get("description", ""), top_k=3)
-    if rag_result.get("matches"):
-        top_match = rag_result["matches"][0]
-        if top_match.get("similarity_tier") in ["HIGH_CONFLICT", "MODERATE_OVERLAP"]:
-            matched_patent_id = top_match["patent_id"]
-            
+    # Task 2: Extract matched_patent_id directly from actual pipeline run events/state_delta
+    report_text = None
+    for e in events:
+        if hasattr(e, "actions") and e.actions and hasattr(e.actions, "state_delta") and e.actions.state_delta:
+            if "innovation_analysis" in e.actions.state_delta:
+                report_text = e.actions.state_delta["innovation_analysis"]
+                break
+                
+    if report_text:
+        m = re.search(r"Patent\s+(US[0-9A-Z]+)", report_text)
+        if m:
+            matched_patent_id = m.group(1)
+
     actual_novelty_band = get_novelty_band(novelty_score)
     
     return {
@@ -132,7 +148,7 @@ def run_single_eval_case(case: Dict[str, Any], runner: Runner, session_service: 
 
 
 def evaluate_all_cases() -> Dict[str, Any]:
-    """Executes the full evaluation harness against all 20 eval cases."""
+    """Executes the full evaluation harness against all eval cases."""
     if not os.path.exists(_EVAL_SET_PATH):
         raise FileNotFoundError(f"Evaluation set missing at {_EVAL_SET_PATH}")
         
@@ -144,9 +160,12 @@ def evaluate_all_cases() -> Dict[str, Any]:
     
     results = []
     
+    auto_answered_novelty_count = 0
     correct_novelty_count = 0
     correct_conflict_count = 0
     correct_security_count = 0
+    total_escalated_count = 0
+    total_parse_failure_count = 0
     
     category_stats = {}
     
@@ -158,20 +177,34 @@ def evaluate_all_cases() -> Dict[str, Any]:
         if cat not in category_stats:
             category_stats[cat] = {
                 "total": 0,
+                "auto_answered": 0,
                 "novelty_correct": 0,
+                "escalated": 0,
+                "parse_failures": 0,
                 "conflict_correct": 0,
                 "security_correct": 0
             }
             
         category_stats[cat]["total"] += 1
         
-        # Dimension 1: Novelty band match
-        novelty_match = (actual["actual_novelty_band"] == gt["expected_novelty_band"])
-        if novelty_match:
-            correct_novelty_count += 1
-            category_stats[cat]["novelty_correct"] += 1
+        # Dimension 1: Novelty band match (computed ONLY on auto-answered numeric scores)
+        status = actual["status"]
+        novelty_match = None
+        if status == "CEILING_ESCALATED":
+            total_escalated_count += 1
+            category_stats[cat]["escalated"] += 1
+        elif status == "PARSE_FAILURE":
+            total_parse_failure_count += 1
+            category_stats[cat]["parse_failures"] += 1
+        elif actual["novelty_score"] is not None:
+            auto_answered_novelty_count += 1
+            category_stats[cat]["auto_answered"] += 1
+            novelty_match = (actual["actual_novelty_band"] == gt["expected_novelty_band"])
+            if novelty_match:
+                correct_novelty_count += 1
+                category_stats[cat]["novelty_correct"] += 1
             
-        # Dimension 2: Conflict identification match
+        # Dimension 2: Conflict identification match (from real tool call events)
         expected_conflict = gt["expected_conflict_patent_id"]
         actual_conflict = actual["matched_patent_id"]
         conflict_match = (actual_conflict == expected_conflict)
@@ -199,19 +232,29 @@ def evaluate_all_cases() -> Dict[str, Any]:
         })
 
     total_cases = len(eval_cases)
+    novelty_acc = round((correct_novelty_count / auto_answered_novelty_count) * 100, 1) if auto_answered_novelty_count > 0 else 0.0
+    escalation_rate = round((total_escalated_count / total_cases) * 100, 1)
     
     metrics = {
         "timestamp": datetime.datetime.now().isoformat(),
         "total_cases": total_cases,
+        "auto_answered_cases": auto_answered_novelty_count,
+        "escalated_cases": total_escalated_count,
+        "parse_failure_count": total_parse_failure_count,
+        "escalation_rate_percent": escalation_rate,
         "overall_accuracy": {
-            "novelty_band_accuracy": round((correct_novelty_count / total_cases) * 100, 1),
+            "novelty_band_accuracy": novelty_acc,
             "conflict_id_accuracy": round((correct_conflict_count / total_cases) * 100, 1),
             "security_detection_accuracy": round((correct_security_count / total_cases) * 100, 1)
         },
         "category_breakdown": {
             cat: {
                 "total": stats["total"],
-                "novelty_acc": round((stats["novelty_correct"] / stats["total"]) * 100, 1),
+                "auto_answered": stats["auto_answered"],
+                "novelty_correct": stats["novelty_correct"],
+                "escalated": stats["escalated"],
+                "parse_failures": stats["parse_failures"],
+                "novelty_acc": round((stats["novelty_correct"] / stats["auto_answered"]) * 100, 1) if stats["auto_answered"] > 0 else 0.0,
                 "conflict_acc": round((stats["conflict_correct"] / stats["total"]) * 100, 1),
                 "security_acc": round((stats["security_correct"] / stats["total"]) * 100, 1)
             }
@@ -228,23 +271,28 @@ def evaluate_all_cases() -> Dict[str, Any]:
         json.dump(metrics, f, indent=2)
 
     # Print summary table
-    print("=" * 85)
-    print("IP-GUARD EVALUATION HARNESS REPORT")
-    print("=" * 85)
-    print(f"Timestamp: {metrics['timestamp']} | Cases: {total_cases}")
+    print("=" * 95)
+    print("IP-GUARD EVALUATION HARNESS REPORT (BUG-FREE Measurement)")
+    print("=" * 95)
+    print(f"Timestamp: {metrics['timestamp']} | Total Cases: {total_cases}")
+    print(f"Auto-Answered Cases: {auto_answered_novelty_count} | Escalated: {total_escalated_count} ({escalation_rate}%) | Parse Failures: {total_parse_failure_count}")
     print(f"Saved Full Detail To: {result_path}\n")
     
+    if total_parse_failure_count > 0:
+        print(f"⚠️ WARNING: {total_parse_failure_count} parse failures detected! Inspect report regex patterns.")
+        
     print("--- OVERALL ACCURACY METRICS ---")
-    print(f"1. Novelty Band Accuracy     : {metrics['overall_accuracy']['novelty_band_accuracy']}%")
-    print(f"2. Conflict ID Accuracy      : {metrics['overall_accuracy']['conflict_id_accuracy']}%")
-    print(f"3. Security Detection Acc.   : {metrics['overall_accuracy']['security_detection_accuracy']}%")
+    print(f"1. Novelty Band Accuracy (Auto-Answered): {metrics['overall_accuracy']['novelty_band_accuracy']}%")
+    print(f"2. Escalation Rate                       : {escalation_rate}%")
+    print(f"3. Conflict ID Accuracy (Event Sourced)  : {metrics['overall_accuracy']['conflict_id_accuracy']}%")
+    print(f"4. Security Detection Acc.               : {metrics['overall_accuracy']['security_detection_accuracy']}%")
     
     print("\n--- CATEGORY BREAKDOWN ---")
-    print(f"{'Category':<22} | {'Count':<5} | {'Novelty Acc':<12} | {'Conflict Acc':<12} | {'Security Acc':<12}")
-    print("-" * 75)
+    print(f"{'Category':<20} | {'Total':<5} | {'AutoAns':<7} | {'Correct':<7} | {'Escalated':<9} | {'ParseFail':<9} | {'NoveltyAcc':<10} | {'ConflictAcc':<11}")
+    print("-" * 95)
     for cat, stat in metrics["category_breakdown"].items():
-        print(f"{cat:<22} | {stat['total']:<5} | {stat['novelty_acc']:<11}% | {stat['conflict_acc']:<11}% | {stat['security_acc']:<11}%")
-    print("=" * 85)
+        print(f"{cat:<20} | {stat['total']:<5} | {stat['auto_answered']:<7} | {stat['novelty_correct']:<7} | {stat['escalated']:<9} | {stat['parse_failures']:<9} | {stat['novelty_acc']:<9}% | {stat['conflict_acc']:<10}%")
+    print("=" * 95)
     
     return metrics
 

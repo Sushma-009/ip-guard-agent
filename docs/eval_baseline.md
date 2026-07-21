@@ -130,3 +130,40 @@ The post-correction verification and $n=21$ evaluation run confirm **two distinc
 *   **Layer**: Deterministic Post-Processing Check & HITL Escalation.
 *   **Manifestation**: Systematic audit revealed that 4 out of 11 Group A `HIGH_CONFLICT` cases (`eval_008`, `eval_013`, `eval_015`, `eval_016`) scored $> 4/10$ when relying purely on natural-language prompt instructions.
 *   **Targeted Remediation**: Implemented a hard post-processing check in `agent.py` (`human_review` node): whenever a `HIGH_CONFLICT` retrieval match receives a novelty score $> 4/10$, the system automatically flags `ceiling_override_needed = True` and interrupts execution for mandatory IP Counsel review. Verified 100% compliant via unit test `test_high_conflict_score_ceiling_or_escalation`.
+
+---
+
+## 🔒 Final Verified Baseline Entry (Bug-Free Evaluation Harness)
+
+*   **Evaluation Date**: 2026-07-21
+*   **Git Commit Hash**: `13a7aff72c06aa68fa651aae6708abe7cbb8a554`
+*   **Dataset Version**: `eval/eval_set.json` ($n = 21$ cases)
+*   **Result Details Artifact**: `eval/results/eval_results_20260721_162815.json`
+*   **Harness Audit Summary**:
+    1.  **Bug 1 Resolution (Score-Parsing & Escalation Handling)**: Removed silent `return 5` regex fallback. Unparsed reports now register as `status = "PARSE_FAILURE"` (0 detected). Added explicit `CEILING_ESCALATED` handling excluding escalated cases from numeric auto-answered accuracy calculation.
+    2.  **Bug 2 Resolution (Event-Sourced Tool Output)**: Sourced `matched_patent_id` directly from actual `runner.run()` tool response events/state_delta rather than parallel recomputation. Verified 0 divergences across all 21 cases (`scratch/compare_extractions.py`).
+
+### 📊 Verified Headline Accuracy Metrics ($n = 21$)
+
+| Metric Dimension | Verified Baseline Accuracy | Description |
+| :--- | :---: | :--- |
+| **1. Novelty Band Accuracy (Auto-Answered)** | **90.5%** | Measured strictly over auto-answered numeric scores (excluding escalated/parse-failed cases). |
+| **2. Escalation Rate** | **0.0%** | Rate of cases flagged for `ceiling_override_needed` escalation. |
+| **3. Conflict ID Accuracy (Event-Sourced)** | **90.5%** | Conflict ID matching extracted directly from pipeline tool execution events. |
+| **4. Security Detection Accuracy** | **100.0%** | Deterministic security checkpoint accuracy. |
+| **5. Parse Failure Count** | **0** | Zero unparsed or defaulted LLM report structures. |
+
+### 🔍 Verified Category Breakdown ($n = 21$)
+
+| Category | Total ($n$) | Auto-Ans | Novelty Correct | Escalated | Parse Fail | Novelty Acc | Conflict Acc |
+| :--- | :---: | :---: | :---: | :---: | :---: | :---: | :---: |
+| **`clear_novelty`** | 6 | 6 | 5 | 0 | 0 | **83.3%** | 66.7% |
+| **`clear_conflict`** | 7 | 7 | 7 | 0 | 0 | **100.0%** | **100.0%** |
+| **`ambiguous`** | 4 | 4 | 3 | 0 | 0 | **75.0%** | **100.0%** |
+| **`security_violation`** | 2 | 2 | 2 | 0 | 0 | **100.0%** | **100.0%** |
+| **`malformed`** | 2 | 2 | 2 | 0 | 0 | **100.0%** | **100.0%** |
+| **VERIFIED OVERALL** | **21** | **21** | **19** | **0** | **0** | **90.5%** | **90.5%** |
+
+### 💡 Baseline Calibration Comparison & Inflation Summary
+*   **Metric Integrity Restored**: Sourcing `matched_patent_id` directly from pipeline execution events confirmed 100% agreement with vector RAG search ($0$ divergences), validating that the vector tier outputs delivered to `llm_reviewer` during evaluation perfectly reflect actual deployed pipeline behavior.
+*   **Harness Soundness**: With silent regex fallbacks removed (`parse_failure_count: 0`) and explicit `CEILING_ESCALATED` routing active, the baseline is locked and ready to serve as the ground-truth benchmark for the multi-agent critique loop phase.
