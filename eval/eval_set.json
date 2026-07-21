@@ -258,5 +258,18 @@
       "expected_security_event": false,
       "rationale": "Malformed submission with non-informative description triggering fast_reject path."
     }
+  },
+  {
+    "case_id": "eval_021",
+    "category": "ambiguous",
+    "title": "Searchable Symmetric Encryption with Homomorphic Key Custody",
+    "description": "A database proxy engine executing searchable symmetric encryption substring queries over ciphertext columns combined with homomorphic multi-party threshold key custody across independent vault nodes.",
+    "libraries_used": ["pycryptodome", "pydantic"],
+    "ground_truth": {
+      "expected_novelty_band": "MEDIUM",
+      "expected_conflict_patent_id": "US9876548B2",
+      "expected_security_event": false,
+      "rationale": "Shares searchable symmetric SQL substring queries over ciphertext with patent US9876548B2, but introduces homomorphic multi-party threshold key custody across independent vault nodes, making this a defensible middle-ground ambiguous case."
+    }
   }
 ]

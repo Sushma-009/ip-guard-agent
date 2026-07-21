@@ -41,3 +41,16 @@ This document records the human technical review and reconciliation process for 
     2.  `US10987657B1` (*Model Extraction Mitigation via Logit Distortion*): Calibrated noise injection into output logit distributions.
 *   **Verdict**: **Update expected conflict to `US10987656B1`!**
     *   *Rationale*: `eval_015` combines proxy token stream interception (`US10987656B1`) with logit noise injection (`US10987657B1`). `US10987656B1` is the stronger structural architecture match because `eval_015` explicitly specifies a proxy server monitoring token generation streams. Updated `expected_conflict_patent_id` to `US10987656B1`.
+
+---
+
+## 🔬 Task 2 (Restoration): Blind Review and Construction of `eval_021`
+
+*   **Submission**: `Searchable Symmetric Encryption with Homomorphic Key Custody`
+    *   *Description*: *"A database proxy engine executing searchable symmetric encryption substring queries over ciphertext columns combined with homomorphic multi-party threshold key custody across independent vault nodes."*
+*   **Domain**: Cryptography
+*   **Candidates Evaluated**:
+    1.  `US9876543B2` (*Homomorphic Cryptographic Key Exchange for Distributed Databases*)
+    2.  `US9876548B2` (*Searchable Symmetric Encryption for Multi-Tenant Database Columns*)
+*   **Blind Technical Verdict**: **Valid Ambiguous / Borderline Submission!**
+    *   *Rationale*: `eval_021` shares searchable SQL substring query mechanics over ciphertext indexes with `US9876548B2`, while incorporating multi-party threshold key custody across vault nodes from `US9876543B2`. The combination represents a defensible middle-ground case. Added to `eval_set.json` as `category: ambiguous`, `expected_novelty_band: MEDIUM`, `expected_conflict_patent_id: US9876548B2`. Total evaluation dataset restored to **$n = 21$ cases** ($n = 4$ ambiguous cases).

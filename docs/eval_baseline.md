@@ -81,3 +81,47 @@ This document establishes the official benchmark baseline for the IP-Guard singl
 ### 💡 Reconciled Root-Cause Hypothesis Validation
 *   **Root-Cause Hypothesis Holds Stronger**: Following blind three-way technical re-judgment, the core finding remains 100% intact: the single-pass LLM reviewer systematically exhibits an **Over-Novelty Bias** on ambiguous cases ($33.3\%$ novelty accuracy on $n=3$ ambiguous cases), over-indexing on surface-level keywords while ignoring underlying vector RAG conflict flags.
 *   **Multi-Agent Critique Target**: The multi-agent critique agent's role is confirmed: act as an *Adversarial Prior-Art Auditor* whose explicit job is to challenge over-novelty scores whenever the vector RAG engine flags `MODERATE_OVERLAP` or `HIGH_CONFLICT` component matches.
+
+---
+
+## 📌 Final Restored Baseline Entry ($n = 21$ cases)
+
+*   **Evaluation Date**: 2026-07-21
+*   **Git Commit Hash**: `436b658340384472a934865458a10f4b5a8d550a`
+*   **Dataset Version**: `eval/eval_set.json` (Restored $n = 21$ cases with $n = 4$ ambiguous cases including `eval_021`)
+*   **Result Details Artifact**: `eval/results/eval_results_20260721_154606.json`
+*   **Trace Report Artifact**: `eval/results/eval_001_trace.md`
+
+### 📊 Final Headline Accuracy Metrics ($n = 21$)
+
+| Metric Dimension | Final Baseline Accuracy | Evaluation Description |
+| :--- | :---: | :--- |
+| **1. Novelty Band Accuracy** | **76.2%** | Asserts actual novelty score falls in expected band (LOW=1-4, MEDIUM=5-7, HIGH=8-10). |
+| **2. Conflict ID Accuracy** | **90.5%** | Asserts pipeline's top retrieval match identifies expected prior-art patent ID. |
+| **3. Security Detection Accuracy** | **100.0%** | Asserts security violations (copyleft manifests, prompt injections) are correctly flagged. |
+
+### 🔍 Final Category Breakdown ($n = 21$)
+
+| Category | Sample Count ($n$) | Novelty Band Acc. | Conflict ID Acc. | Security Detection Acc. |
+| :--- | :---: | :---: | :---: | :---: |
+| **`clear_novelty`** | 6 | **83.3%** | 66.7% | 100.0% |
+| **`clear_conflict`** | 7 | **85.7%** | **100.0%** | 100.0% |
+| **`ambiguous`** | 4 | **25.0%** | **100.0%** | 100.0% |
+| **`security_violation`** | 2 | **100.0%** | **100.0%** | **100.0%** |
+| **`malformed`** | 2 | **100.0%** | **100.0%** | **100.0%** |
+
+---
+
+## 🔬 Final Separated Root-Cause Architecture Findings
+
+The post-correction verification and $n=21$ evaluation run confirm **two distinct, independent root causes** across different architectural layers:
+
+### 1. Downstream LLM Tier Non-Compliance & Over-Novelty Bias
+*   **Layer**: LLM Reviewer Prompt & Reasoning Phase.
+*   **Manifestation**: On ambiguous cases ($n=4$), Novelty Accuracy is **25.0%**. The single-pass LLM over-indexes on surface-level novel terms (e.g. ZK-proofs, proxy stream monitoring) and fails to penalize novelty even when the vector search flags `MODERATE_OVERLAP` or `HIGH_CONFLICT` component matches.
+*   **Targeted Remediation**: **Multi-Agent Critique Loop**. The critique agent will be specifically designed as an *Adversarial Prior-Art Auditor* whose role is to challenge over-novelty scores when vector RAG reports component matches.
+
+### 2. Upstream Retrieval-Layer Term Clustering (`embedding_vocabulary_overlap_false_positive`)
+*   **Layer**: ChromaDB Dense Vector Embedding & Prior-Art Retrieval.
+*   **Manifestation**: `eval_001` (electro-optic GHz phase modulator hardware) matched `US11234569B2` (decoy state QKD software protocol) at $0.624$ (`HIGH_CONFLICT`), causing a false positive conflict flag.
+*   **Targeted Remediation**: Cannot be fixed by prompt engineering. Requires corpus expansion to separate hardware/protocol vector clusters or a secondary structural filter (hardware apparatus vs. software protocol claim structure check).
