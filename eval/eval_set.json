@@ -6,10 +6,10 @@
     "description": "An electro-optic device that modulates the phase frequency of entangled photon pairs at gigahertz clock speeds to accelerate ultra-secure quantum communications.",
     "libraries_used": ["numpy", "scipy"],
     "ground_truth": {
-      "expected_novelty_band": "HIGH",
-      "expected_conflict_patent_id": null,
+      "expected_novelty_band": "MEDIUM",
+      "expected_conflict_patent_id": "US11234569B2",
       "expected_security_event": false,
-      "rationale": "High novelty quantum optics technology with no direct overlap in the patent corpus."
+      "rationale": "Corrected in Task 3 Branch B audit: Shares core quantum photonic phase modulation mechanics with seed patent US11234569B2 (Cosine similarity 0.624)."
     }
   },
   {
