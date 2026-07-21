@@ -82,17 +82,22 @@ def get_vector_store_stats() -> Dict[str, Any]:
 
 
 def classify_similarity_tier(similarity_score: float) -> str:
-    """Task 2: Buckets cosine similarity scores into calibrated policy tiers.
+    """Task 2 & Task A: Buckets cosine similarity scores into calibrated policy tiers.
+
+    Empirical Calibration Benchmark (docs/threshold_calibration.md):
+    - Unrelated Queries Max Observed Similarity : 0.309
+    - True Paraphrase Min Observed Similarity   : 0.744
+    - Empirical Gap Midpoint                     : 0.526 -> Calibrated Boundary: 0.55
 
     Tiers:
-    - > 0.70          -> HIGH_CONFLICT (Strong evidence against novelty)
-    - 0.50 - 0.70     -> MODERATE_OVERLAP (Partial overlap requiring justification)
-    - 0.35 - 0.50     -> LOW_OVERLAP (Low similarity context)
+    - >= 0.55          -> HIGH_CONFLICT (Strong evidence against novelty)
+    - 0.45 - 0.55     -> MODERATE_OVERLAP (Partial overlap requiring justification)
+    - 0.35 - 0.45     -> LOW_OVERLAP (Low similarity context)
     - < 0.35          -> NOT_RELEVANT (Filtered out of LLM prompt)
     """
-    if similarity_score >= 0.70:
+    if similarity_score >= 0.55:
         return "HIGH_CONFLICT"
-    elif similarity_score >= 0.50:
+    elif similarity_score >= 0.45:
         return "MODERATE_OVERLAP"
     elif similarity_score >= 0.35:
         return "LOW_OVERLAP"

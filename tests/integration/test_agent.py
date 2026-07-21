@@ -482,6 +482,60 @@ def test_high_conflict_tier_forces_low_novelty_score() -> None:
     assert has_interrupt, "Expected workflow to interrupt with high conflict novelty reduction"
 
 
+def test_high_conflict_tier_forces_low_novelty_score_independent_case() -> None:
+    """Task B: Independent test case using US10456789B1 (Cloud Storage S3 Sync) not used in Task 1 calibration."""
+    from expense_agent.vector_store import search_prior_art_vectors
+
+    independent_paraphrase = "Background daemon monitoring directory filesystem changes and performing delta encryption sync to AWS S3 storage buckets"
+
+    # Assertion 1: Vector search correctly assigns novel paraphrase to HIGH_CONFLICT tier
+    search_res = search_prior_art_vectors(independent_paraphrase, top_k=3)
+    assert search_res.get("matches"), "Expected vector match for independent paraphrase"
+    top_match = search_res["matches"][0]
+    assert top_match["patent_id"] == "US10456789B1", f"Expected patent US10456789B1, got {top_match['patent_id']}"
+    assert top_match["similarity_tier"] == "HIGH_CONFLICT", f"Expected HIGH_CONFLICT tier, got {top_match['similarity_tier']}"
+    assert top_match["raw_similarity_score"] >= 0.55, f"Expected raw similarity score >= 0.55, got {top_match['raw_similarity_score']}"
+
+    # Assertion 2: LLM reviewer workflow resulting novelty score is <= 4/10
+    session_service = InMemorySessionService()
+    session = session_service.create_session_sync(user_id="test_user", app_name="test")
+    runner = Runner(agent=root_agent, session_service=session_service, app_name="test")
+
+    input_data = {
+        "data": {
+            "title": "Automated Cloud File Synchronization and Encrypted S3 Backup Storage",
+            "submitter": "Sarah Cloud",
+            "department": "Infrastructure",
+            "description": independent_paraphrase,
+            "libraries_used": ["boto3"],
+            "date": "2026-07-09"
+        }
+    }
+    message = types.Content(
+        role="user", parts=[types.Part.from_text(text=json.dumps(input_data))]
+    )
+
+    events = list(
+        runner.run(
+            new_message=message,
+            user_id="test_user",
+            session_id=session.id,
+            run_config=RunConfig(streaming_mode=StreamingMode.SSE),
+        )
+    )
+
+    has_interrupt = False
+    for event in events:
+        if event.content and event.content.parts:
+            for part in event.content.parts:
+                if part.function_call and part.function_call.name == "adk_request_input":
+                    has_interrupt = True
+                    msg = str(part.function_call.args.get("message", ""))
+                    assert "HIGH_CONFLICT" in msg or "Novelty Score: 3/10" in msg or "Novelty Assessment (Novelty Score: 3/10)" in msg
+                    break
+    assert has_interrupt, "Expected workflow to interrupt with high conflict novelty score reduction for independent case"
+
+
 def test_vector_store_cold_start_count_assertion_and_health() -> None:
     """Task 3: Verifies cold-start count assertion and vector store stats."""
     from expense_agent.vector_store import get_vector_store_stats
