@@ -114,6 +114,9 @@ class WorkflowOutput(BaseModel):
     is_security_event: bool = False
 
 
+from .vector_store import search_prior_art_vectors
+
+
 # --- Helper Functions for Security ---
 
 def scrub_pii(text: str) -> tuple[str, list[str]]:
@@ -142,21 +145,25 @@ def scrub_pii(text: str) -> tuple[str, list[str]]:
 
 
 def detect_forbidden_licenses(text: str, libraries: List[str]) -> List[str]:
-    """Detects copyleft licenses in description or list of libraries."""
+    """Detects copyleft licenses in libraries list or explicit import/license declarations in text."""
     violations = []
     copyleft_keywords = ["gpl", "agpl", "copyleft", "gnu general public"]
     
-    text_lower = text.lower()
-    for kw in copyleft_keywords:
-        if kw in text_lower:
-            violations.append(f"Description refers to copyleft terms ({kw})")
-            
+    # 1. Check structured libraries list (highest priority)
     for lib in libraries:
         lib_lower = lib.lower()
         for kw in copyleft_keywords:
             if kw in lib_lower:
                 violations.append(f"Forbidden copyleft library/license: {lib}")
                 
+    # 2. Check text for explicit license declarations or code imports (avoids negative phrases like 'avoided GPL')
+    declaration_pattern = re.compile(
+        r"\b(license|import|depends_on|dependency|using\s+the|licensed\s+under)\s*[:=]?\s*['\"]?.*?\b(gpl|agpl|copyleft|gnu\s+general\s+public)\b",
+        re.IGNORECASE
+    )
+    if declaration_pattern.search(text):
+        violations.append("Description contains explicit copyleft license declaration or code import")
+        
     return violations
 
 
@@ -182,30 +189,15 @@ def detect_prompt_injection(text: str) -> bool:
 # --- Custom Agent Skill (Function Tool) ---
 
 def check_prior_art(query: str, tool_context: ToolContext = None) -> dict:
-    """Searches the patent registry database for prior art matching the query.
+    """Searches USPTO vector database for prior art matching the technology query using cosine semantic similarity.
 
     Args:
-        query: The patent or technology name to look up in the registry.
+        query: The patent or technology description to look up in the registry.
 
     Returns:
-        dict: The result containing matches found or confirmation of clean status.
+        dict: The vector search results containing semantic matches, patent IDs, and similarity scores.
     """
-    # Simple simulated database of existing patented concepts
-    database = {
-        "blockchain database": "US Patent 9,123,456 - Distributed Ledger Architecture",
-        "llm security gate": "US Patent 10,987,654 - AI Prompt Injection Firewall",
-        "expense auto-approval": "US Patent 8,555,222 - Automated Expense Audit Workflow"
-    }
-    
-    query_lower = query.lower()
-    matches = []
-    for key, patent in database.items():
-        if key in query_lower:
-            matches.append(patent)
-            
-    if matches:
-        return {"status": "MATCH_FOUND", "prior_art": matches}
-    return {"status": "CLEAN", "prior_art": []}
+    return search_prior_art_vectors(query, top_k=3)
 
 
 # --- Workflow Nodes ---
@@ -308,8 +300,9 @@ def parse_submission(ctx: Context, node_input: Any) -> Event:
         )
 
 
-def fast_reject(node_input: SubmissionDetails) -> WorkflowOutput:
-    """Automatically rejects submissions that lack complete information."""
+def fast_reject(ctx: Context, node_input: SubmissionDetails) -> WorkflowOutput:
+    """Automatically rejects submissions that lack complete information and records unified audit entry."""
+    redacted = ctx.state.get("redacted_types", []) or []
     return WorkflowOutput(
         title=node_input.title,
         submitter=node_input.submitter,
@@ -318,7 +311,10 @@ def fast_reject(node_input: SubmissionDetails) -> WorkflowOutput:
         libraries_used=node_input.libraries_used,
         date=node_input.date,
         status="REJECTED",
-        reason="Auto-rejected: Incomplete submission. Title must be present, and description must be at least 15 characters long."
+        reason="Auto-rejected: Incomplete submission. Title must be present, and description must be at least 15 characters long.",
+        innovation_analysis="Skipped due to fast-reject policy.",
+        redacted_types=redacted,
+        is_security_event=False
     )
 
 
@@ -373,11 +369,37 @@ def security_checkpoint(ctx: Context, node_input: SubmissionDetails) -> Event:
 # --- Callback for Integration Tests ---
 
 async def mock_before_model(callback_context, llm_request) -> Optional[LlmResponse]:
-    """Mock callback triggered to avoid billing/API issues during playground & integration tests."""
+    """Mock callback triggered to avoid billing/API issues while executing real ChromaDB vector RAG search."""
+    query = "patent technology description"
+    if llm_request and hasattr(llm_request, "contents") and llm_request.contents:
+        for c in llm_request.contents:
+            if hasattr(c, "parts") and c.parts:
+                for p in c.parts:
+                    if hasattr(p, "text") and p.text:
+                        query = p.text[:200]
+                        break
+
+    rag_result = search_prior_art_vectors(query, top_k=2)
+    matches = rag_result.get("matches", [])
+    
+    if matches:
+        match_summary = "\n".join([f"- Patent {m['patent_id']} ('{m['title']}'): Vector Similarity {m['similarity_score']*100:.1f}%" for m in matches])
+        report = (
+            f"Novelty Assessment (Novelty Score: 7/10). Commercial Impact: 8/10.\n"
+            f"ChromaDB Prior Art Vector Matches Found:\n{match_summary}\n"
+            f"Recommendation: Review patent scope against retrieved prior-art vector matches."
+        )
+    else:
+        report = (
+            "Novelty Assessment (Novelty Score: 9/10). Commercial Impact: 9/10.\n"
+            "ChromaDB Vector Search: No matching prior-art patents found (Cosine similarity < 0.45).\n"
+            "Recommendation: High novelty score. Recommended for patent filing."
+        )
+
     return LlmResponse(
         content=types.Content(
             role="model",
-            parts=[types.Part.from_text(text="Novelty Score: 8/10. Commercial Impact: 9/10. Prior art lookup returned no matching blockers. Recommended for patent filing.")]
+            parts=[types.Part.from_text(text=report)]
         )
     )
 

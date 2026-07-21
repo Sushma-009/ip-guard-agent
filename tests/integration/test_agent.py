@@ -158,6 +158,48 @@ def test_manual_review_and_approve_clean() -> None:
         assert "Novelty Score" in output.innovation_analysis
 
 
+def test_avoided_gpl_text_does_not_trigger_false_positive() -> None:
+    """Verifies that conversational negative sentences mentioning 'GPL' do not trigger false positive security events."""
+    session_service = InMemorySessionService()
+    session = session_service.create_session_sync(user_id="test_user", app_name="test")
+    runner = Runner(agent=root_agent, session_service=session_service, app_name="test")
+
+    input_data = {
+        "data": {
+            "title": "Clean Module Architecture",
+            "submitter": "Alice",
+            "department": "Platform Eng",
+            "description": "We deliberately avoided GPL code and strictly used MIT licensed packages to build our routing module.",
+            "libraries_used": ["mit-router-core"],
+            "date": "2026-07-02"
+        }
+    }
+    message = types.Content(
+        role="user", parts=[types.Part.from_text(text=json.dumps(input_data))]
+    )
+
+    events = list(
+        runner.run(
+            new_message=message,
+            user_id="test_user",
+            session_id=session.id,
+            run_config=RunConfig(streaming_mode=StreamingMode.SSE),
+        )
+    )
+
+    # Verify that it routes to clean LLM review interrupt and NOT a security warning flag
+    has_interrupt = False
+    for event in events:
+        if event.content and event.content.parts:
+            for part in event.content.parts:
+                if part.function_call and part.function_call.name == "adk_request_input":
+                    has_interrupt = True
+                    msg = str(part.function_call.args.get("message", ""))
+                    assert "SECURITY / COMPLIANCE WARNING" not in msg, "Expected clean submission not to trigger security warning"
+                    break
+    assert has_interrupt, "Expected clean submission to reach human approval interrupt cleanly"
+
+
 def test_manual_review_and_reject_clean() -> None:
     """Tests that a clean submission can be manually rejected by the IP Counsel."""
     session_service = InMemorySessionService()
