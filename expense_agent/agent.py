@@ -98,6 +98,7 @@ class WorkflowState(BaseModel):
     redacted_types: List[str] = Field(default_factory=list)
     is_security_event: bool = False
     security_reasons: List[str] = Field(default_factory=list)
+    ceiling_override_needed: bool = False
 
 
 class WorkflowOutput(BaseModel):
@@ -112,6 +113,7 @@ class WorkflowOutput(BaseModel):
     innovation_analysis: Optional[str] = None
     redacted_types: List[str] = Field(default_factory=list)
     is_security_event: bool = False
+    ceiling_override_needed: bool = False
 
 
 from .vector_store import search_prior_art_vectors
@@ -376,7 +378,7 @@ async def mock_before_model(callback_context, llm_request) -> Optional[LlmRespon
             if hasattr(c, "parts") and c.parts:
                 for p in c.parts:
                     if hasattr(p, "text") and p.text:
-                        query = p.text[:200]
+                        query = p.text[:1000]  # Full description text
                         break
 
     rag_result = search_prior_art_vectors(query, top_k=3)
@@ -386,7 +388,9 @@ async def mock_before_model(callback_context, llm_request) -> Optional[LlmRespon
     has_high_conflict = any(m.get("similarity_tier") == "HIGH_CONFLICT" for m in matches)
     has_moderate_overlap = any(m.get("similarity_tier") == "MODERATE_OVERLAP" for m in matches)
     
-    if has_high_conflict:
+    if "override_high_conflict_score_test" in query:
+        novelty_score = 9  # Simulates an unreliable LLM returning 9/10 despite HIGH_CONFLICT
+    elif has_high_conflict:
         novelty_score = 3  # High conflict enforces score <= 4/10
     elif has_moderate_overlap:
         novelty_score = 6
@@ -469,7 +473,22 @@ async def human_review(ctx: Context, node_input: Any):
                     message_parts.append(f"- {reason}")
                 message_parts.append("")
         else:
-            message_parts.append("⚠️ ALERT: Innovation submission requires review and filing decision.\n")
+            # Task 2: Deterministic Post-Processing Check for Ceiling Discrepancy
+            analysis_report = ctx.state.get("innovation_analysis") or str(node_input)
+            import re
+            score_match = re.search(r"Novelty Score:\s*(\d+)", analysis_report, re.IGNORECASE)
+            novelty_val = int(score_match.group(1)) if score_match else 5
+            has_high_conflict = ("HIGH_CONFLICT" in analysis_report or "High Conflict" in analysis_report)
+            
+            if has_high_conflict and novelty_val > 4:
+                ctx.state["ceiling_override_needed"] = True
+                message_parts.append(
+                    "⚠️ ATTENTION: DISCREPANCY DETECTED BETWEEN RETRIEVAL TIER AND NOVELTY SCORE!\n"
+                    "Retrieval engine flagged a HIGH_CONFLICT prior-art match, but LLM reviewer assigned a novelty score > 4/10.\n"
+                    "Ceiling override review required by IP Counsel.\n"
+                )
+            else:
+                message_parts.append("⚠️ ALERT: Innovation submission requires review and filing decision.\n")
             
         message_parts.append(
             f"Title: {submission.title}\n"

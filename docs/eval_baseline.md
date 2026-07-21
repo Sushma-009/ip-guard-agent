@@ -125,3 +125,8 @@ The post-correction verification and $n=21$ evaluation run confirm **two distinc
 *   **Layer**: ChromaDB Dense Vector Embedding & Prior-Art Retrieval.
 *   **Manifestation**: `eval_001` (electro-optic GHz phase modulator hardware) matched `US11234569B2` (decoy state QKD software protocol) at $0.624$ (`HIGH_CONFLICT`), causing a false positive conflict flag.
 *   **Targeted Remediation**: Cannot be fixed by prompt engineering. Requires corpus expansion to separate hardware/protocol vector clusters or a secondary structural filter (hardware apparatus vs. software protocol claim structure check).
+
+### 3. Ceiling Enforcement & Discrepancy Escalation (`ceiling_override_needed`)
+*   **Layer**: Deterministic Post-Processing Check & HITL Escalation.
+*   **Manifestation**: Systematic audit revealed that 4 out of 11 Group A `HIGH_CONFLICT` cases (`eval_008`, `eval_013`, `eval_015`, `eval_016`) scored $> 4/10$ when relying purely on natural-language prompt instructions.
+*   **Targeted Remediation**: Implemented a hard post-processing check in `agent.py` (`human_review` node): whenever a `HIGH_CONFLICT` retrieval match receives a novelty score $> 4/10$, the system automatically flags `ceiling_override_needed = True` and interrupts execution for mandatory IP Counsel review. Verified 100% compliant via unit test `test_high_conflict_score_ceiling_or_escalation`.
