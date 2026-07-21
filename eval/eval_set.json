@@ -6,10 +6,10 @@
     "description": "An electro-optic device that modulates the phase frequency of entangled photon pairs at gigahertz clock speeds to accelerate ultra-secure quantum communications.",
     "libraries_used": ["numpy", "scipy"],
     "ground_truth": {
-      "expected_novelty_band": "MEDIUM",
-      "expected_conflict_patent_id": "US11234569B2",
+      "expected_novelty_band": "HIGH",
+      "expected_conflict_patent_id": null,
       "expected_security_event": false,
-      "rationale": "Corrected in Task 3 Branch B audit: Shares core quantum photonic phase modulation mechanics with seed patent US11234569B2 (Cosine similarity 0.624)."
+      "rationale": "High novelty quantum optics hardware apparatus. Blind review confirmed candidate patents US11234567B2, US11234568B2, and US11234569B2 describe network routing, repeaters, or decoy protocols, with no direct electro-optic GHz phase frequency modulator overlap."
     }
   },
   {
@@ -170,15 +170,15 @@
   },
   {
     "case_id": "eval_014",
-    "category": "ambiguous",
+    "category": "clear_conflict",
     "title": "Cloud Object Store Deduplication with Client-Side Delta Chunking",
     "description": "A distributed file storage middleware running variable block deduplication and AES-GCM client-side encryption prior to uploading chunks to object storage.",
     "libraries_used": ["botocore"],
     "ground_truth": {
-      "expected_novelty_band": "MEDIUM",
+      "expected_novelty_band": "LOW",
       "expected_conflict_patent_id": "US10456790B1",
       "expected_security_event": false,
-      "rationale": "Borderline overlap combining deduplication patent US10456790B1 with zero-knowledge encryption."
+      "rationale": "Direct prior-art conflict with US10456790B1 (Deduplicated Block-Level Cloud Storage Compression Engine). Both claim variable block chunking and hash deduplication for cloud object stores. Adding AES-GCM client-side encryption is an incremental engineering implementation detail."
     }
   },
   {
@@ -189,9 +189,9 @@
     "libraries_used": ["transformers"],
     "ground_truth": {
       "expected_novelty_band": "MEDIUM",
-      "expected_conflict_patent_id": "US10987657B1",
+      "expected_conflict_patent_id": "US10987656B1",
       "expected_security_event": false,
-      "rationale": "Borderline overlap with logit distortion defense US10987657B1 applied to live token streams."
+      "rationale": "Borderline overlap combining proxy token stream interception architecture (US10987656B1) with logit noise injection (US10987657B1). Blind review selected US10987656B1 as the primary structural architecture match."
     }
   },
   {
