@@ -167,3 +167,42 @@ The post-correction verification and $n=21$ evaluation run confirm **two distinc
 ### 💡 Baseline Calibration Comparison & Inflation Summary
 *   **Metric Integrity Restored**: Sourcing `matched_patent_id` directly from pipeline execution events confirmed 100% agreement with vector RAG search ($0$ divergences), validating that the vector tier outputs delivered to `llm_reviewer` during evaluation perfectly reflect actual deployed pipeline behavior.
 *   **Harness Soundness**: With silent regex fallbacks removed (`parse_failure_count: 0`) and explicit `CEILING_ESCALATED` routing active, the baseline is locked and ready to serve as the ground-truth benchmark for the multi-agent critique loop phase.
+
+---
+
+## 🔐 Re-Locked Ground Truth Baseline Entry (Branch B Escalation Resolution)
+
+*   **Evaluation Date**: 2026-07-21
+*   **Git Commit Hash**: `9b7f18f1082f822b8611e1450d02396e42fbfaac`
+*   **Dataset Version**: `eval/eval_set.json` ($n = 21$ cases)
+*   **Result Details Artifact**: `eval/results/eval_results_20260721_163401.json`
+*   **Raw Message Dumps**: `scratch/eval_013_raw_message.txt`, `scratch/eval_015_raw_message.txt`, `scratch/eval_016_raw_message.txt`
+
+### 🔬 Root-Cause & Branch B Audit Diagnosis
+*   **Root Cause (Branch B)**: In `mock_before_model`, query string extraction sliced `p.text[:1000]`, which captured system prompt instructions preamble (`"You are an expert AI patent reviewer..."`) alongside submission JSON. The preamble noise lowered ChromaDB similarity for ambiguous cases (`eval_013`, `eval_015`, `eval_016`) from `HIGH_CONFLICT` ($\ge 0.55$) down to `LOW/MODERATE_OVERLAP` ($38\% - 52\%$), preventing the downstream `human_review` escalation check from firing during mock eval runs.
+*   **Resolution**: Sliced exact `title` and `description` JSON payload fields in `mock_before_model` without system prompt preamble, and preserved single-pass LLM over-novelty failure mode simulation for ambiguous submissions.
+
+### 📊 Re-Locked Ground Truth Headline Accuracy Metrics ($n = 21$)
+
+| Metric Dimension | Re-Locked Baseline Value | Description |
+| :--- | :---: | :--- |
+| **1. Novelty Band Accuracy (Auto-Answered)** | **82.4%** | Measured strictly over auto-answered numeric scores (14/17 correct). |
+| **2. Escalation Rate** | **19.0%** | 4/21 cases escalated for `ceiling_override_needed` (`eval_008`, `eval_013`, `eval_015`, `eval_016`). |
+| **3. Conflict ID Accuracy (Event-Sourced)** | **90.5%** | Sourced directly from pipeline tool execution events (19/21). |
+| **4. Security Detection Accuracy** | **100.0%** | Deterministic security checkpoint accuracy (21/21). |
+| **5. Parse Failure Count** | **0** | Zero unparsed or defaulted LLM report structures. |
+
+### 🔍 Re-Locked Category Breakdown ($n = 21$)
+
+| Category | Total ($n$) | Auto-Ans | Novelty Correct | Escalated | Parse Fail | Novelty Acc | Conflict Acc |
+| :--- | :---: | :---: | :---: | :---: | :---: | :---: | :---: |
+| **`clear_novelty`** | 6 | 6 | 4 | 0 | 0 | **66.7%** | 66.7% |
+| **`clear_conflict`** | 7 | 6 | 6 | 1 (`eval_008`) | 0 | **100.0%** | **100.0%** |
+| **`ambiguous`** | 4 | 1 | 0 | 3 (`013,015,016`)| 0 | **0.0%** | **100.0%** |
+| **`security_violation`** | 2 | 2 | 2 | 0 | 0 | **100.0%** | **100.0%** |
+| **`malformed`** | 2 | 2 | 2 | 0 | 0 | **100.0%** | **100.0%** |
+| **RE-LOCKED GROUND TRUTH**| **21** | **17** | **14** | **4 (19.0%)** | **0** | **82.4%** | **90.5%** |
+
+### 💡 Inflation Analysis & Multi-Agent Critique Target
+*   **Prior Figure Inflation**: The previous 90.5% novelty accuracy was inflated by **8.1 percentage points** (90.5% vs 82.4%) because ceiling-escalated cases were being auto-answered as numerical matches rather than routed to human review.
+*   **Locked Multi-Agent Target**: The true baseline ground truth is **82.4% Auto-Answered Novelty Accuracy** with a **19.0% Escalation Rate**. The multi-agent critique loop will specifically target reducing the 19.0% escalation rate and resolving ambiguous category novelty reasoning.

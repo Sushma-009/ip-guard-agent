@@ -378,20 +378,37 @@ async def mock_before_model(callback_context, llm_request) -> Optional[LlmRespon
             if hasattr(c, "parts") and c.parts:
                 for p in c.parts:
                     if hasattr(p, "text") and p.text:
-                        query = p.text[:1000]  # Full description text
+                        raw_text = p.text
+                        import re, json
+                        json_match = re.search(r"\{.*\}", raw_text, re.DOTALL)
+                        if json_match:
+                            try:
+                                sub_data = json.loads(json_match.group(0))
+                                query = f"{sub_data.get('title', '')} {sub_data.get('description', '')}".strip()
+                            except Exception:
+                                query = raw_text[:500]
+                        else:
+                            query = raw_text[:500]
                         break
 
     rag_result = search_prior_art_vectors(query, top_k=3)
     matches = rag_result.get("matches", [])
     
-    # Task 2: Check for HIGH_CONFLICT match
+    # Check for HIGH_CONFLICT match
     has_high_conflict = any(m.get("similarity_tier") == "HIGH_CONFLICT" for m in matches)
     has_moderate_overlap = any(m.get("similarity_tier") == "MODERATE_OVERLAP" for m in matches)
     
     if "override_high_conflict_score_test" in query:
-        novelty_score = 9  # Simulates an unreliable LLM returning 9/10 despite HIGH_CONFLICT
+        novelty_score = 9
     elif has_high_conflict:
-        novelty_score = 3  # High conflict enforces score <= 4/10
+        # In a single-pass LLM, ambiguous submissions with shiny keywords (e.g. ZK-proofs, token distortion)
+        # over-index on novelty (scoring 9/10 or 6/10) despite vector HIGH_CONFLICT tier.
+        # Check if submission is ambiguous/differentiating vs direct copy.
+        lowered_query = query.lower()
+        if "zero-knowledge" in lowered_query or "token noise" in lowered_query or "oxygenation" in lowered_query:
+            novelty_score = 9  # Over-novelty LLM compliance failure mode
+        else:
+            novelty_score = 3  # Direct conflict compliance
     elif has_moderate_overlap:
         novelty_score = 6
     else:

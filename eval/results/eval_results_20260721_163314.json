@@ -1,0 +1,592 @@
+{
+  "timestamp": "2026-07-21T16:33:14.136545",
+  "total_cases": 21,
+  "auto_answered_cases": 21,
+  "escalated_cases": 0,
+  "parse_failure_count": 0,
+  "escalation_rate_percent": 0.0,
+  "overall_accuracy": {
+    "novelty_band_accuracy": 90.5,
+    "conflict_id_accuracy": 90.5,
+    "security_detection_accuracy": 100.0
+  },
+  "category_breakdown": {
+    "clear_novelty": {
+      "total": 6,
+      "auto_answered": 6,
+      "novelty_correct": 5,
+      "escalated": 0,
+      "parse_failures": 0,
+      "novelty_acc": 83.3,
+      "conflict_acc": 66.7,
+      "security_acc": 100.0
+    },
+    "clear_conflict": {
+      "total": 7,
+      "auto_answered": 7,
+      "novelty_correct": 7,
+      "escalated": 0,
+      "parse_failures": 0,
+      "novelty_acc": 100.0,
+      "conflict_acc": 100.0,
+      "security_acc": 100.0
+    },
+    "ambiguous": {
+      "total": 4,
+      "auto_answered": 4,
+      "novelty_correct": 3,
+      "escalated": 0,
+      "parse_failures": 0,
+      "novelty_acc": 75.0,
+      "conflict_acc": 100.0,
+      "security_acc": 100.0
+    },
+    "security_violation": {
+      "total": 2,
+      "auto_answered": 2,
+      "novelty_correct": 2,
+      "escalated": 0,
+      "parse_failures": 0,
+      "novelty_acc": 100.0,
+      "conflict_acc": 100.0,
+      "security_acc": 100.0
+    },
+    "malformed": {
+      "total": 2,
+      "auto_answered": 2,
+      "novelty_correct": 2,
+      "escalated": 0,
+      "parse_failures": 0,
+      "novelty_acc": 100.0,
+      "conflict_acc": 100.0,
+      "security_acc": 100.0
+    }
+  },
+  "case_details": [
+    {
+      "case_id": "eval_001",
+      "title": "Quantum Photonic Entanglement Frequency Modulator",
+      "category": "clear_novelty",
+      "ground_truth": {
+        "expected_novelty_band": "HIGH",
+        "expected_conflict_patent_id": null,
+        "expected_security_event": false,
+        "rationale": "High novelty quantum optics hardware apparatus. Blind review confirmed candidate patents US11234567B2, US11234568B2, and US11234569B2 describe network routing, repeaters, or decoy protocols, with no direct electro-optic GHz phase frequency modulator overlap."
+      },
+      "actual": {
+        "case_id": "eval_001",
+        "category": "clear_novelty",
+        "status": "PAUSED_FOR_REVIEW",
+        "novelty_score": 6,
+        "actual_novelty_band": "MEDIUM",
+        "matched_patent_id": "US11234569B2",
+        "is_security_event": false
+      },
+      "scores": {
+        "novelty_match": false,
+        "conflict_match": false,
+        "security_match": true
+      }
+    },
+    {
+      "case_id": "eval_002",
+      "title": "Solar-Powered Microbial Fuel Cell for Wetland Remediation",
+      "category": "clear_novelty",
+      "ground_truth": {
+        "expected_novelty_band": "HIGH",
+        "expected_conflict_patent_id": null,
+        "expected_security_event": false,
+        "rationale": "Novel bio-environmental technology operating in a distinct technical domain."
+      },
+      "actual": {
+        "case_id": "eval_002",
+        "category": "clear_novelty",
+        "status": "PAUSED_FOR_REVIEW",
+        "novelty_score": 9,
+        "actual_novelty_band": "HIGH",
+        "matched_patent_id": "US7654324B2",
+        "is_security_event": false
+      },
+      "scores": {
+        "novelty_match": true,
+        "conflict_match": false,
+        "security_match": true
+      }
+    },
+    {
+      "case_id": "eval_003",
+      "title": "Acoustic Levitation Container for Pharmaceutical Micro-Crystals",
+      "category": "clear_novelty",
+      "ground_truth": {
+        "expected_novelty_band": "HIGH",
+        "expected_conflict_patent_id": null,
+        "expected_security_event": false,
+        "rationale": "Specialized ultrasonic pharmaceutical manufacturing apparatus."
+      },
+      "actual": {
+        "case_id": "eval_003",
+        "category": "clear_novelty",
+        "status": "PAUSED_FOR_REVIEW",
+        "novelty_score": 9,
+        "actual_novelty_band": "HIGH",
+        "matched_patent_id": null,
+        "is_security_event": false
+      },
+      "scores": {
+        "novelty_match": true,
+        "conflict_match": true,
+        "security_match": true
+      }
+    },
+    {
+      "case_id": "eval_004",
+      "title": "Neuromorphic Memristor Array for Edge Thermal Imaging",
+      "category": "clear_novelty",
+      "ground_truth": {
+        "expected_novelty_band": "HIGH",
+        "expected_conflict_patent_id": null,
+        "expected_security_event": false,
+        "rationale": "Specialized neuromorphic hardware architecture for edge thermal vision."
+      },
+      "actual": {
+        "case_id": "eval_004",
+        "category": "clear_novelty",
+        "status": "PAUSED_FOR_REVIEW",
+        "novelty_score": 9,
+        "actual_novelty_band": "HIGH",
+        "matched_patent_id": null,
+        "is_security_event": false
+      },
+      "scores": {
+        "novelty_match": true,
+        "conflict_match": true,
+        "security_match": true
+      }
+    },
+    {
+      "case_id": "eval_005",
+      "title": "Closed-Loop Synthetic Enzyme Reactor for Plastics Depolymerization",
+      "category": "clear_novelty",
+      "ground_truth": {
+        "expected_novelty_band": "HIGH",
+        "expected_conflict_patent_id": null,
+        "expected_security_event": false,
+        "rationale": "Enzymatic chemical recycling apparatus distinct from digital database patents."
+      },
+      "actual": {
+        "case_id": "eval_005",
+        "category": "clear_novelty",
+        "status": "PAUSED_FOR_REVIEW",
+        "novelty_score": 9,
+        "actual_novelty_band": "HIGH",
+        "matched_patent_id": null,
+        "is_security_event": false
+      },
+      "scores": {
+        "novelty_match": true,
+        "conflict_match": true,
+        "security_match": true
+      }
+    },
+    {
+      "case_id": "eval_006",
+      "title": "Autonomous Submersible LiDAR Mapper for Coral Reef Ecosystems",
+      "category": "clear_novelty",
+      "ground_truth": {
+        "expected_novelty_band": "HIGH",
+        "expected_conflict_patent_id": null,
+        "expected_security_event": false,
+        "rationale": "Sub-surface optical oceanographic mapping system."
+      },
+      "actual": {
+        "case_id": "eval_006",
+        "category": "clear_novelty",
+        "status": "PAUSED_FOR_REVIEW",
+        "novelty_score": 9,
+        "actual_novelty_band": "HIGH",
+        "matched_patent_id": null,
+        "is_security_event": false
+      },
+      "scores": {
+        "novelty_match": true,
+        "conflict_match": true,
+        "security_match": true
+      }
+    },
+    {
+      "case_id": "eval_007",
+      "title": "Distributed Ledger Secondary Arbiter Consensus Protocol",
+      "category": "clear_conflict",
+      "ground_truth": {
+        "expected_novelty_band": "LOW",
+        "expected_conflict_patent_id": "US9123456B2",
+        "expected_security_event": false,
+        "rationale": "Direct paraphrase of seed patent US9123456B2 (Blockchain Secondary Supervisor Arbitration)."
+      },
+      "actual": {
+        "case_id": "eval_007",
+        "category": "clear_conflict",
+        "status": "PAUSED_FOR_REVIEW",
+        "novelty_score": 3,
+        "actual_novelty_band": "LOW",
+        "matched_patent_id": "US9123456B2",
+        "is_security_event": false
+      },
+      "scores": {
+        "novelty_match": true,
+        "conflict_match": true,
+        "security_match": true
+      }
+    },
+    {
+      "case_id": "eval_008",
+      "title": "AI Model Prompt Injection Defense and Input Gate",
+      "category": "clear_conflict",
+      "ground_truth": {
+        "expected_novelty_band": "LOW",
+        "expected_conflict_patent_id": "US10987654B1",
+        "expected_security_event": false,
+        "rationale": "Direct paraphrase of seed patent US10987654B1 (AI Prompt Injection Firewall)."
+      },
+      "actual": {
+        "case_id": "eval_008",
+        "category": "clear_conflict",
+        "status": "PAUSED_FOR_REVIEW",
+        "novelty_score": 3,
+        "actual_novelty_band": "LOW",
+        "matched_patent_id": "US10987654B1",
+        "is_security_event": false
+      },
+      "scores": {
+        "novelty_match": true,
+        "conflict_match": true,
+        "security_match": true
+      }
+    },
+    {
+      "case_id": "eval_009",
+      "title": "Quantum Network Router for Photonic Entanglement Packets",
+      "category": "clear_conflict",
+      "ground_truth": {
+        "expected_novelty_band": "LOW",
+        "expected_conflict_patent_id": "US11234567B2",
+        "expected_security_event": false,
+        "rationale": "Direct match for seed patent US11234567B2 (Quantum Packet Header Processing)."
+      },
+      "actual": {
+        "case_id": "eval_009",
+        "category": "clear_conflict",
+        "status": "PAUSED_FOR_REVIEW",
+        "novelty_score": 3,
+        "actual_novelty_band": "LOW",
+        "matched_patent_id": "US11234567B2",
+        "is_security_event": false
+      },
+      "scores": {
+        "novelty_match": true,
+        "conflict_match": true,
+        "security_match": true
+      }
+    },
+    {
+      "case_id": "eval_010",
+      "title": "Background S3 Object File Delta Synchronization Utility",
+      "category": "clear_conflict",
+      "ground_truth": {
+        "expected_novelty_band": "LOW",
+        "expected_conflict_patent_id": "US10456789B1",
+        "expected_security_event": false,
+        "rationale": "Direct match for seed patent US10456789B1 (Automated Cloud S3 Backup Storage)."
+      },
+      "actual": {
+        "case_id": "eval_010",
+        "category": "clear_conflict",
+        "status": "PAUSED_FOR_REVIEW",
+        "novelty_score": 3,
+        "actual_novelty_band": "LOW",
+        "matched_patent_id": "US10456789B1",
+        "is_security_event": false
+      },
+      "scores": {
+        "novelty_match": true,
+        "conflict_match": true,
+        "security_match": true
+      }
+    },
+    {
+      "case_id": "eval_011",
+      "title": "Homomorphic Encryption Key Exchange Protocol for Databases",
+      "category": "clear_conflict",
+      "ground_truth": {
+        "expected_novelty_band": "LOW",
+        "expected_conflict_patent_id": "US9876543B2",
+        "expected_security_event": false,
+        "rationale": "Direct match for seed patent US9876543B2 (Homomorphic Cryptographic Key Exchange)."
+      },
+      "actual": {
+        "case_id": "eval_011",
+        "category": "clear_conflict",
+        "status": "PAUSED_FOR_REVIEW",
+        "novelty_score": 3,
+        "actual_novelty_band": "LOW",
+        "matched_patent_id": "US9876543B2",
+        "is_security_event": false
+      },
+      "scores": {
+        "novelty_match": true,
+        "conflict_match": true,
+        "security_match": true
+      }
+    },
+    {
+      "case_id": "eval_012",
+      "title": "Subsurface Agricultural Soil Tension Drip Sensor Network",
+      "category": "clear_conflict",
+      "ground_truth": {
+        "expected_novelty_band": "LOW",
+        "expected_conflict_patent_id": "US7654321B2",
+        "expected_security_event": false,
+        "rationale": "Direct match for seed patent US7654321B2 (Precision Soil Moisture Sensing & Irrigation)."
+      },
+      "actual": {
+        "case_id": "eval_012",
+        "category": "clear_conflict",
+        "status": "PAUSED_FOR_REVIEW",
+        "novelty_score": 3,
+        "actual_novelty_band": "LOW",
+        "matched_patent_id": "US7654321B2",
+        "is_security_event": false
+      },
+      "scores": {
+        "novelty_match": true,
+        "conflict_match": true,
+        "security_match": true
+      }
+    },
+    {
+      "case_id": "eval_013",
+      "title": "Layer-2 Rollup Batch State Compression Engine",
+      "category": "ambiguous",
+      "ground_truth": {
+        "expected_novelty_band": "MEDIUM",
+        "expected_conflict_patent_id": "US9123460B2",
+        "expected_security_event": false,
+        "rationale": "Borderline overlap with optimistic rollup patent US9123460B2; uses ZK proofs instead of fraud proofs."
+      },
+      "actual": {
+        "case_id": "eval_013",
+        "category": "ambiguous",
+        "status": "PAUSED_FOR_REVIEW",
+        "novelty_score": 9,
+        "actual_novelty_band": "HIGH",
+        "matched_patent_id": "US9123460B2",
+        "is_security_event": false
+      },
+      "scores": {
+        "novelty_match": false,
+        "conflict_match": true,
+        "security_match": true
+      }
+    },
+    {
+      "case_id": "eval_014",
+      "title": "Cloud Object Store Deduplication with Client-Side Delta Chunking",
+      "category": "clear_conflict",
+      "ground_truth": {
+        "expected_novelty_band": "LOW",
+        "expected_conflict_patent_id": "US10456790B1",
+        "expected_security_event": false,
+        "rationale": "Direct prior-art conflict with US10456790B1 (Deduplicated Block-Level Cloud Storage Compression Engine). Both claim variable block chunking and hash deduplication for cloud object stores. Adding AES-GCM client-side encryption is an incremental engineering implementation detail."
+      },
+      "actual": {
+        "case_id": "eval_014",
+        "category": "clear_conflict",
+        "status": "PAUSED_FOR_REVIEW",
+        "novelty_score": 3,
+        "actual_novelty_band": "LOW",
+        "matched_patent_id": "US10456790B1",
+        "is_security_event": false
+      },
+      "scores": {
+        "novelty_match": true,
+        "conflict_match": true,
+        "security_match": true
+      }
+    },
+    {
+      "case_id": "eval_015",
+      "title": "Dynamic LLM Output Streaming Anomaly Distortion",
+      "category": "ambiguous",
+      "ground_truth": {
+        "expected_novelty_band": "MEDIUM",
+        "expected_conflict_patent_id": "US10987656B1",
+        "expected_security_event": false,
+        "rationale": "Borderline overlap combining proxy token stream interception architecture (US10987656B1) with logit noise injection (US10987657B1). Blind review selected US10987656B1 as the primary structural architecture match."
+      },
+      "actual": {
+        "case_id": "eval_015",
+        "category": "ambiguous",
+        "status": "PAUSED_FOR_REVIEW",
+        "novelty_score": 6,
+        "actual_novelty_band": "MEDIUM",
+        "matched_patent_id": "US10987656B1",
+        "is_security_event": false
+      },
+      "scores": {
+        "novelty_match": true,
+        "conflict_match": true,
+        "security_match": true
+      }
+    },
+    {
+      "case_id": "eval_016",
+      "title": "Greenhouse Hydroponic Closed-Loop Nitrogen Recirculation",
+      "category": "ambiguous",
+      "ground_truth": {
+        "expected_novelty_band": "MEDIUM",
+        "expected_conflict_patent_id": "US7654324B2",
+        "expected_security_event": false,
+        "rationale": "Borderline overlap with hydroponic dosing patent US7654324B2."
+      },
+      "actual": {
+        "case_id": "eval_016",
+        "category": "ambiguous",
+        "status": "PAUSED_FOR_REVIEW",
+        "novelty_score": 6,
+        "actual_novelty_band": "MEDIUM",
+        "matched_patent_id": "US7654324B2",
+        "is_security_event": false
+      },
+      "scores": {
+        "novelty_match": true,
+        "conflict_match": true,
+        "security_match": true
+      }
+    },
+    {
+      "case_id": "eval_017",
+      "title": "Enterprise Server Patch Manager with GPL Core",
+      "category": "security_violation",
+      "ground_truth": {
+        "expected_novelty_band": "LOW",
+        "expected_conflict_patent_id": null,
+        "expected_security_event": true,
+        "rationale": "Contains forbidden copyleft library (libgpl-v3-core) in libraries_used manifest."
+      },
+      "actual": {
+        "case_id": "eval_017",
+        "category": "security_violation",
+        "status": "SECURITY_FLAGGED",
+        "novelty_score": 1,
+        "actual_novelty_band": "LOW",
+        "matched_patent_id": null,
+        "is_security_event": true
+      },
+      "scores": {
+        "novelty_match": true,
+        "conflict_match": true,
+        "security_match": true
+      }
+    },
+    {
+      "case_id": "eval_018",
+      "title": "Automated Cloud Provisioning Script",
+      "category": "security_violation",
+      "ground_truth": {
+        "expected_novelty_band": "LOW",
+        "expected_conflict_patent_id": null,
+        "expected_security_event": true,
+        "rationale": "Contains prompt injection payload attempting to force auto-approval."
+      },
+      "actual": {
+        "case_id": "eval_018",
+        "category": "security_violation",
+        "status": "SECURITY_FLAGGED",
+        "novelty_score": 1,
+        "actual_novelty_band": "LOW",
+        "matched_patent_id": null,
+        "is_security_event": true
+      },
+      "scores": {
+        "novelty_match": true,
+        "conflict_match": true,
+        "security_match": true
+      }
+    },
+    {
+      "case_id": "eval_019",
+      "title": "",
+      "category": "malformed",
+      "ground_truth": {
+        "expected_novelty_band": "LOW",
+        "expected_conflict_patent_id": null,
+        "expected_security_event": false,
+        "rationale": "Malformed submission with empty title and short description, triggering fast_reject path."
+      },
+      "actual": {
+        "case_id": "eval_019",
+        "category": "malformed",
+        "status": "REJECTED",
+        "novelty_score": 1,
+        "actual_novelty_band": "LOW",
+        "matched_patent_id": null,
+        "is_security_event": false
+      },
+      "scores": {
+        "novelty_match": true,
+        "conflict_match": true,
+        "security_match": true
+      }
+    },
+    {
+      "case_id": "eval_020",
+      "title": "System",
+      "category": "malformed",
+      "ground_truth": {
+        "expected_novelty_band": "LOW",
+        "expected_conflict_patent_id": null,
+        "expected_security_event": false,
+        "rationale": "Malformed submission with non-informative description triggering fast_reject path."
+      },
+      "actual": {
+        "case_id": "eval_020",
+        "category": "malformed",
+        "status": "REJECTED",
+        "novelty_score": 1,
+        "actual_novelty_band": "LOW",
+        "matched_patent_id": null,
+        "is_security_event": false
+      },
+      "scores": {
+        "novelty_match": true,
+        "conflict_match": true,
+        "security_match": true
+      }
+    },
+    {
+      "case_id": "eval_021",
+      "title": "Searchable Symmetric Encryption with Homomorphic Key Custody",
+      "category": "ambiguous",
+      "ground_truth": {
+        "expected_novelty_band": "MEDIUM",
+        "expected_conflict_patent_id": "US9876548B2",
+        "expected_security_event": false,
+        "rationale": "Shares searchable symmetric SQL substring queries over ciphertext with patent US9876548B2, but introduces homomorphic multi-party threshold key custody across independent vault nodes, making this a defensible middle-ground ambiguous case."
+      },
+      "actual": {
+        "case_id": "eval_021",
+        "category": "ambiguous",
+        "status": "PAUSED_FOR_REVIEW",
+        "novelty_score": 6,
+        "actual_novelty_band": "MEDIUM",
+        "matched_patent_id": "US9876548B2",
+        "is_security_event": false
+      },
+      "scores": {
+        "novelty_match": true,
+        "conflict_match": true,
+        "security_match": true
+      }
+    }
+  ]
+}
