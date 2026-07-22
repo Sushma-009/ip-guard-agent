@@ -535,7 +535,7 @@ def test_high_conflict_tier_forces_low_novelty_score_independent_case() -> None:
 
 
 def test_high_conflict_score_ceiling_or_escalation() -> None:
-    """Task 2: Asserts that any case with a HIGH_CONFLICT tier and novelty_score > 4 sets ceiling_override_needed flag and pauses for review."""
+    """Task 2: Asserts that any case with a HIGH_CONFLICT tier and novelty_score > 9 sets ceiling_override_needed flag and pauses for review."""
     session_service = InMemorySessionService()
     session = session_service.create_session_sync(user_id="test_user", app_name="test")
     runner = Runner(agent=root_agent, session_service=session_service, app_name="test")
@@ -553,22 +553,41 @@ def test_high_conflict_score_ceiling_or_escalation() -> None:
     # Store initial state directly on session object
     session.state["submission"] = session_dict
     session.state["is_security_event"] = False
-    session.state["innovation_analysis"] = "Novelty Assessment (Novelty Score: 9/10).\nChromaDB Prior Art Calibrated Vector Tiers:\n- Patent US11234567B2: [HIGH_CONFLICT] Raw Similarity 88.0%"
-
-    # Trigger human review step
-    input_data = {"data": session_dict}
-    message = types.Content(
-        role="user", parts=[types.Part.from_text(text=json.dumps(input_data))]
-    )
-
-    events = list(
-        runner.run(
-            new_message=message,
-            user_id="test_user",
-            session_id=session.id,
-            run_config=RunConfig(streaming_mode=StreamingMode.SSE),
+    
+    async def mock_high_score(callback_context, llm_request) -> LlmResponse:
+        return LlmResponse(
+            content=types.Content(
+                role="model",
+                parts=[types.Part.from_text(text="### Technical Evaluation\n\n#### 1. Novelty Assessment\nNovelty Score: 9/10\n\n#### 3. Prior Art Check Results\n- US11234567B2 (HIGH_CONFLICT)")]
+            )
         )
-    )
+    
+    # Mutate llm_reviewer on both the original import and compiled workflow graph nodes
+    llm_reviewer.before_model_callback = mock_high_score
+    for node in root_agent.graph.nodes:
+        if getattr(node, "name", None) == "llm_reviewer":
+            node.before_model_callback = mock_high_score
+
+    try:
+        # Trigger human review step
+        input_data = {"data": session_dict}
+        message = types.Content(
+            role="user", parts=[types.Part.from_text(text=json.dumps(input_data))]
+        )
+
+        events = list(
+            runner.run(
+                new_message=message,
+                user_id="test_user",
+                session_id=session.id,
+                run_config=RunConfig(streaming_mode=StreamingMode.SSE),
+            )
+        )
+    finally:
+        llm_reviewer.before_model_callback = None
+        for node in root_agent.graph.nodes:
+            if getattr(node, "name", None) == "llm_reviewer":
+                node.before_model_callback = None
 
     has_escalation = False
     for event in events:

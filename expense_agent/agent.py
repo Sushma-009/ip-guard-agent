@@ -495,7 +495,7 @@ async def human_review(ctx: Context, node_input: Any):
                 r"Novelty Score\s*out\s*of\s*10:\s*(\d+)",
                 r"Novelty:\s*(\d+)"
             ]
-            novelty_val = 5
+            novelty_val = None
             for pattern in patterns:
                 match = re.search(pattern, analysis_report, re.IGNORECASE)
                 if match:
@@ -503,7 +503,13 @@ async def human_review(ctx: Context, node_input: Any):
                     break
             has_high_conflict = ("HIGH_CONFLICT" in analysis_report or "High Conflict" in analysis_report)
             
-            if has_high_conflict and novelty_val > 4:
+            if novelty_val is None:
+                ctx.state["ceiling_override_needed"] = True
+                message_parts.append(
+                    "⚠️ ATTENTION: PARSE FAILURE DETECTED!\n"
+                    "Unable to parse novelty score from LLM report. Escalating to IP Counsel for manual review.\n"
+                )
+            elif has_high_conflict and novelty_val > 4:
                 ctx.state["ceiling_override_needed"] = True
                 message_parts.append(
                     "⚠️ ATTENTION: DISCREPANCY DETECTED BETWEEN RETRIEVAL TIER AND NOVELTY SCORE!\n"
