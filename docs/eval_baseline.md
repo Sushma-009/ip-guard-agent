@@ -348,6 +348,12 @@ Each remaining miss is fully accounted for by three distinct architectural root 
 ### 2. Bucket A2 — Ceiling Rule Too Rigid for Graduated Conflict (Ceiling Rigidity)
 *   **`eval_021`**: The prior-art match on SSE is real (`US9876548B2` at `HIGH_CONFLICT`), but the submission introduces a strong, articulable cryptographic differentiator (homomorphic MPC threshold custody across vault nodes) that justifies a `MEDIUM` novelty band. The current binary post-processing logic immediately overrides this to `LOW`, making it too rigid to handle graduated overlaps.
 
+#### ⚠️ Sample Size Limitation
+This finding is confirmed on $n=1$ (`eval_021`). It establishes that ceiling rigidity is a real failure mode requiring an arbitration mechanism, but $n=1$ is insufficient to calibrate how strong a differentiator must be to justify softening the ceiling from `LOW` to `MEDIUM`. Treat the existence of the problem as confirmed; treat any specific threshold or scoring rule for the arbitration step as unvalidated until tested against more cases.
+
+#### 📋 Future Calibration Prerequisite
+Before calibrating Graduated Conflict Arbitration thresholds, expand A2 test coverage beyond `eval_021`. Construct 2-3 additional lightweight A2-candidate cases (e.g. submissions with a real `HIGH_CONFLICT`-tier match to an existing corpus patent, but claiming technical differentiators of varying strength: one strong/clear, one weak/borderline) and run them through the independent blind-review process before modifying ground truth.
+
 ### 3. Bucket B — Retrieval Query Drift
 *   **`eval_013`**: Query drift confirmed. The LLM reworded the original description into:
     > `Layer-2 Rollup Batch State Compression Engine zero-knowledge validity proofs state roots layer-1 blockchain`
@@ -366,3 +372,5 @@ The certified baseline metrics confirm that **0.0% of failures are caused by gen
 1.  **Query Formulation Audit (Bucket B — eval_013)**: Independently audit, expand, and sanitize LLM search queries against the original submission description to prevent query drift.
 2.  **Retrieval False-Positive Filter (Bucket A1 — eval_001, eval_002)**: Inspect retrieved matches and cross-reference descriptions/abstracts to filter out spurious matches caused by vocabulary-only clustering before applying novelty ceiling constraints.
 3.  **Graduated Conflict Arbitration (Bucket A2 — eval_021)**: When a prior-art match is real but a specific, non-trivial technical differentiator is present in the submission, arbitrate the final score to allow a `MEDIUM` band outcome instead of enforcing a hard binary `LOW` ceiling. This introduces a soft-ceiling policy under explicit, articulable differentiator verification.
+
+Three-part critique loop design brief is certified for Buckets B and A1 (each independently evidenced across multiple cases). Bucket A2 is certified as a real, confirmed problem but flagged as requiring further calibration data before its arbitration logic is finalized — the critique loop can be designed to include an A2 arbitration step now, with its scoring threshold treated as a tunable parameter to revisit once more A2 cases exist.
