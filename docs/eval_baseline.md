@@ -265,3 +265,39 @@ Under real Gemini model execution (at `temperature=0.0`), the three previously i
 #### 3. Ceiling Enforcement & Discrepancy Escalation
 *   **Status**: **RECONFIRMED**.
 *   **Real Behavior**: Under real model execution, `eval_008` successfully avoided escalation because the LLM correctly rated it `2/10` (LOW). However, `eval_012` and `eval_021` both assigned novelty scores $> 4/10$ despite `HIGH_CONFLICT` matches. They were successfully intercepted and routed to `CEILING_ESCALATED` by our post-processing logic, limiting our escalation rate to **9.5%**. This proves the post-processing ceiling guard test functions correctly to prevent LLM non-compliance from leaking into production decision-making.
+
+---
+
+## 🔬 Real-LLM Root Cause Re-Validation
+
+Under the real Gemini model (at `temperature=0.0`), the four cases previously escalated under the mock were traced and re-validated:
+
+*   **`eval_008` (clear_conflict)**: Classified as **(a) Correctly resolved**. The real model respected the instructions and assigned a novelty score of `2/10` (LOW) matching the `HIGH_CONFLICT` prior-art tier, resolving cleanly without escalation. The mock had failed to simulate this correctly.
+*   **`eval_013` (ambiguous)**: Classified as **(a) Correctly resolved**. The real model assigned a novelty score of `3/10` (LOW) for the `HIGH_CONFLICT` retrieval tier (`US9123460B2`), resolving cleanly without escalation.
+*   **`eval_016` (ambiguous)**: Classified as **(a) Correctly resolved**. The real model assigned a novelty score of `3/10` (LOW) for the `HIGH_CONFLICT` retrieval tier (`US7654324B2`), resolving cleanly without escalation.
+*   **`eval_015` (ambiguous)**: Classified as **(c) Different failure mode entirely**. In this run, the LLM-generated query for the tool call shifted the retrieval tier from `HIGH_CONFLICT` to `MODERATE_OVERLAP` (`US10987656B1` at `50.0%`). Consequently, no ceiling discrepancy was flagged, and the LLM's novelty score of `5/10` (MEDIUM) was auto-accepted, bypassing the high-conflict ceiling check.
+
+---
+
+## 🔐 Root-Cause Findings (Real LLM, Post De-Mock)
+
+The re-validation of the real LLM baseline has revealed the following core root-cause findings:
+
+### 1. High-Conflict Ceiling Compliance Non-Determinism (`eval_012`, `eval_021`)
+*   **Layer**: LLM Reviewer Reasoning & Post-Processing.
+*   **Evidence**:
+    *   **`eval_012` (clear_conflict)** was escalated because the real LLM assigned a novelty score $> 4/10$ despite the `HIGH_CONFLICT` match with `US7654321B2`.
+    *   **`eval_021` (ambiguous)** was escalated because the real LLM assigned a novelty score $> 4/10$ despite the `HIGH_CONFLICT` match with `US9876548B2`.
+*   **Finding**: The real model is less confident or more permissive on clear-cut/ambiguous conflicts under certain conditions, violating the $\le 4/10$ ceiling instructions and requiring post-processing ceiling overrides / escalation (escalation rate: **9.5%**).
+
+### 2. Retrieval-Layer Query Drift (`eval_015`)
+*   **Layer**: LLM-to-Tool Interface.
+*   **Evidence**:
+    *   For **`eval_015`**, the LLM-generated tool query shifted the retrieval tier from `HIGH_CONFLICT` (which we get when querying with the exact submission description) to `MODERATE_OVERLAP`.
+*   **Finding**: The single-pass agent allows the LLM to format its own search queries, which can lead to query drift, lowering the retrieved similarity score and allowing otherwise conflicting submissions to bypass the novelty ceiling.
+
+### 3. Upstream Retrieval-Layer Vocabulary Clustering (`eval_001`)
+*   **Layer**: ChromaDB Vector Search.
+*   **Evidence**:
+    *   **`eval_001`** (GHz electro-optic phase modulator hardware) continues to match `US11234569B2` (QKD software protocol) at $0.624$ (`HIGH_CONFLICT`) due to heavy overlap in terminology, despite being from completely different domains.
+*   **Finding**: Upstream dense embedding retrieval remains prone to false-positive clustering on shared technical vocabulary. This is independent of the LLM and behaves identically to the mocked runs.
