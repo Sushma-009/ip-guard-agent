@@ -54,3 +54,13 @@ This document records the human technical review and reconciliation process for 
     2.  `US9876548B2` (*Searchable Symmetric Encryption for Multi-Tenant Database Columns*)
 *   **Blind Technical Verdict**: **Valid Ambiguous / Borderline Submission!**
     *   *Rationale*: `eval_021` shares searchable SQL substring query mechanics over ciphertext indexes with `US9876548B2`, while incorporating multi-party threshold key custody across vault nodes from `US9876543B2`. The combination represents a defensible middle-ground case. Added to `eval_set.json` as `category: ambiguous`, `expected_novelty_band: MEDIUM`, `expected_conflict_patent_id: US9876548B2`. Total evaluation dataset restored to **$n = 21$ cases** ($n = 4$ ambiguous cases).
+
+---
+
+## 🔬 Task 5: Re-judgment and Correction of `eval_016`
+
+*   **Submission**: `Greenhouse Hydroponic Closed-Loop Nitrogen Recirculation`
+    *   *Description*: *"An automated agricultural dosing apparatus monitoring electrical conductivity to balance macro-nutrients and oxygenation levels in commercial crop beds."*
+*   **Candidate Evaluated**: `US7654324B2` (*Closed-Loop Hydroponic Nutrient Dosing and Salinity Monitoring*)
+*   **Verdict**: **Recategorized from `ambiguous` to `clear_conflict`!**
+    *   *Rationale*: Both systems monitor electrical conductivity (EC) to automate micro/macro-nutrient solution dosing in closed-loop recirculating hydroponic setups. The submission's mention of "oxygenation levels" is a minor, non-inventive engineering parameter (typically implemented using a standard dissolved oxygen sensor and basic aeration recirculating flow), not a distinct core invention. A technical examiner would reject this submission based directly on the prior art of `US7654324B2`. Updated `category: clear_conflict`, `expected_novelty_band: LOW`, `expected_conflict_patent_id: US7654324B2`.
