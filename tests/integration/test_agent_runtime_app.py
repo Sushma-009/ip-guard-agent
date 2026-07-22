@@ -31,8 +31,6 @@ async def mock_before_model(callback_context, llm_request) -> LlmResponse:
         )
     )
 
-llm_reviewer.before_model_callback = mock_before_model
-
 
 @pytest.fixture
 def agent_app(monkeypatch: pytest.MonkeyPatch) -> AgentEngineApp:

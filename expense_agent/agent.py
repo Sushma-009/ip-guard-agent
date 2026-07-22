@@ -368,10 +368,10 @@ def security_checkpoint(ctx: Context, node_input: SubmissionDetails) -> Event:
         )
 
 
-# --- Callback for Integration Tests ---
+# --- Unused Mock Callback (Dev/Offline Reference Only) ---
 
-async def mock_before_model(callback_context, llm_request) -> Optional[LlmResponse]:
-    """Mock callback triggered to avoid billing/API issues while executing real ChromaDB vector RAG search."""
+async def _DEV_ONLY_mock_before_model_UNUSED(callback_context, llm_request) -> Optional[LlmResponse]:
+    """INTENTIONALLY UNUSED: Kept for offline test reference only. DO NOT attach to root_agent."""
     query = "patent technology description"
     if llm_request and hasattr(llm_request, "contents") and llm_request.contents:
         for c in llm_request.contents:
@@ -394,21 +394,17 @@ async def mock_before_model(callback_context, llm_request) -> Optional[LlmRespon
     rag_result = search_prior_art_vectors(query, top_k=3)
     matches = rag_result.get("matches", [])
     
-    # Check for HIGH_CONFLICT match
     has_high_conflict = any(m.get("similarity_tier") == "HIGH_CONFLICT" for m in matches)
     has_moderate_overlap = any(m.get("similarity_tier") == "MODERATE_OVERLAP" for m in matches)
     
     if "override_high_conflict_score_test" in query:
         novelty_score = 9
     elif has_high_conflict:
-        # In a single-pass LLM, ambiguous submissions with shiny keywords (e.g. ZK-proofs, token distortion)
-        # over-index on novelty (scoring 9/10 or 6/10) despite vector HIGH_CONFLICT tier.
-        # Check if submission is ambiguous/differentiating vs direct copy.
         lowered_query = query.lower()
         if "zero-knowledge" in lowered_query or "token noise" in lowered_query or "oxygenation" in lowered_query:
-            novelty_score = 9  # Over-novelty LLM compliance failure mode
+            novelty_score = 9
         else:
-            novelty_score = 3  # Direct conflict compliance
+            novelty_score = 3
     elif has_moderate_overlap:
         novelty_score = 6
     else:
@@ -439,10 +435,11 @@ async def mock_before_model(callback_context, llm_request) -> Optional[LlmRespon
     )
 
 
-# LLM node for assessing patent prior art and scoring novelty
+# LLM node for assessing patent prior art and scoring novelty (REAL GEMINI MODEL CALL)
 llm_reviewer = LlmAgent(
     name="llm_reviewer",
     model=Gemini(model=Config.MODEL),
+    generate_content_config=types.GenerateContentConfig(temperature=0.0),
     instruction=(
         "You are an expert AI patent reviewer and intellectual property (IP) analyst. "
         "Review the provided innovation submission details. "
@@ -461,7 +458,7 @@ llm_reviewer = LlmAgent(
     ),
     tools=[check_prior_art],
     output_key="innovation_analysis",
-    before_model_callback=mock_before_model
+    before_model_callback=None
 )
 
 

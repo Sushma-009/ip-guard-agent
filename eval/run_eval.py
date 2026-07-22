@@ -6,7 +6,11 @@ import os
 import sys
 import datetime
 import re
+import dotenv
 from typing import Dict, Any, List, Optional
+
+# Load environment variables
+dotenv.load_dotenv()
 
 # Add project root to sys.path
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -29,9 +33,16 @@ def parse_novelty_score_from_report(report_text: str) -> Optional[int]:
     """
     if not report_text:
         return None
-    match = re.search(r"Novelty Score:\s*(\d+)", report_text, re.IGNORECASE)
-    if match:
-        return int(match.group(1))
+    patterns = [
+        r"Novelty Score:\s*(\d+)",
+        r"Novelty Assessment:\s*(\d+)",
+        r"Novelty Score\s*out\s*of\s*10:\s*(\d+)",
+        r"Novelty:\s*(\d+)"
+    ]
+    for pattern in patterns:
+        match = re.search(pattern, report_text, re.IGNORECASE)
+        if match:
+            return int(match.group(1))
     return None
 
 
@@ -121,16 +132,12 @@ def run_single_eval_case(case: Dict[str, Any], runner: Runner, session_service: 
                                 status = "PARSE_FAILURE"
                         break
 
-    # Task 2: Extract matched_patent_id directly from actual pipeline run events/state_delta
-    report_text = None
-    for e in events:
-        if hasattr(e, "actions") and e.actions and hasattr(e.actions, "state_delta") and e.actions.state_delta:
-            if "innovation_analysis" in e.actions.state_delta:
-                report_text = e.actions.state_delta["innovation_analysis"]
-                break
+    # Extract matched_patent_id directly from the final session state
+    sess = session_service.get_session_sync(app_name="eval_app", user_id="eval_user", session_id=session.id)
+    report_text = sess.state.get("innovation_analysis") if sess else None
                 
     if report_text:
-        m = re.search(r"Patent\s+(US[0-9A-Z]+)", report_text)
+        m = re.search(r"\b(US\d{7,10}[A-Z0-9]{1,3})\b", report_text)
         if m:
             matched_patent_id = m.group(1)
 
@@ -169,7 +176,11 @@ def evaluate_all_cases() -> Dict[str, Any]:
     
     category_stats = {}
     
-    for case in eval_cases:
+    import time
+    for idx, case in enumerate(eval_cases):
+        print(f"[{idx+1}/{len(eval_cases)}] Running eval case {case['case_id']}...")
+        if idx > 0:
+            time.sleep(5)  # Rate limit: 12 requests per minute (below 15 RPM limit)
         actual = run_single_eval_case(case, runner, session_service)
         gt = case["ground_truth"]
         cat = case["category"]
