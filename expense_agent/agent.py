@@ -489,9 +489,18 @@ async def human_review(ctx: Context, node_input: Any):
         else:
             # Task 2: Deterministic Post-Processing Check for Ceiling Discrepancy
             analysis_report = ctx.state.get("innovation_analysis") or str(node_input)
-            import re
-            score_match = re.search(r"Novelty Score:\s*(\d+)", analysis_report, re.IGNORECASE)
-            novelty_val = int(score_match.group(1)) if score_match else 5
+            patterns = [
+                r"Novelty Score:\s*(\d+)",
+                r"Novelty Assessment:\s*(\d+)",
+                r"Novelty Score\s*out\s*of\s*10:\s*(\d+)",
+                r"Novelty:\s*(\d+)"
+            ]
+            novelty_val = 5
+            for pattern in patterns:
+                match = re.search(pattern, analysis_report, re.IGNORECASE)
+                if match:
+                    novelty_val = int(match.group(1))
+                    break
             has_high_conflict = ("HIGH_CONFLICT" in analysis_report or "High Conflict" in analysis_report)
             
             if has_high_conflict and novelty_val > 4:
