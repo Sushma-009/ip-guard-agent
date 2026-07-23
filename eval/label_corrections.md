@@ -64,3 +64,18 @@ This document records the human technical review and reconciliation process for 
 *   **Candidate Evaluated**: `US7654324B2` (*Closed-Loop Hydroponic Nutrient Dosing and Salinity Monitoring*)
 *   **Verdict**: **Recategorized from `ambiguous` to `clear_conflict`!**
     *   *Rationale*: Both systems monitor electrical conductivity (EC) to automate micro/macro-nutrient solution dosing in closed-loop recirculating hydroponic setups. The submission's mention of "oxygenation levels" is a minor, non-inventive engineering parameter (typically implemented using a standard dissolved oxygen sensor and basic aeration recirculating flow), not a distinct core invention. A technical examiner would reject this submission based directly on the prior art of `US7654324B2`. Updated `category: clear_conflict`, `expected_novelty_band: LOW`, `expected_conflict_patent_id: US7654324B2`.
+
+---
+
+## 🔬 Task 3 (Adjudication): Fourth Technical Review of `eval_001`
+
+*   **Date**: 2026-07-23 (Post-Certified Paced API Run Verification)
+*   **Submission**: `Quantum Photonic Entanglement Frequency Modulator`
+*   **Description**: *"An electro-optic device that modulates the phase frequency of entangled photon pairs at gigahertz clock speeds to accelerate ultra-secure quantum communications."*
+*   **Candidate Evaluated**: `US11234569B2` (*Quantum Key Distribution Protocol with Decoy State Modulation*)
+*   **Verdict**: **The historical verdict is AUTHORITATIVE. No direct overlap — `clear_novelty` / `HIGH` / `null` is the correct technical state.**
+*   **Detailed Reconciling Rationale**: 
+    1. The candidate patent (`US11234569B2`) describes a software-level protocol for decoy state QKD to mitigate PNS security vulnerabilities, but does not claim or describe a physical GHz electro-optic phase/frequency modulator hardware device.
+    2. The model's classification of `VERIFIED_CONFLICT_WITH_DIFFERENTIATOR` is a lexical/vocabulary-level false-positive. The three-way verifier prompt has a broad middle category that grouped both together under "quantum/photonic/phase state modulation."
+    3. Because the underlying hardware mechanism does not overlap with the software protocol logic of the candidate, they do not share a core mechanism.
+    4. Therefore, the ground truth of `expected_novelty_band: HIGH` with no conflict matches remains correct. The pipeline's automated `LOW` classification (enforced because the verifier falsely verified the conflict and the arbiter evaluated it under strict technical obviousness) represents a known limitation of using LLM classifiers on specialized optoelectronic hardware vs. QKD software protocols.

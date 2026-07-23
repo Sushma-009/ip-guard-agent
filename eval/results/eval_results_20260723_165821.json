@@ -1,0 +1,663 @@
+{
+  "timestamp": "2026-07-23T16:58:21.077417",
+  "total_cases": 21,
+  "auto_answered_cases": 21,
+  "escalated_cases": 0,
+  "parse_failure_count": 0,
+  "escalation_rate_percent": 0.0,
+  "overall_accuracy": {
+    "novelty_band_accuracy": 90.5,
+    "conflict_id_accuracy": 100.0,
+    "security_detection_accuracy": 100.0
+  },
+  "category_breakdown": {
+    "clear_novelty": {
+      "total": 6,
+      "auto_answered": 6,
+      "novelty_correct": 6,
+      "escalated": 0,
+      "parse_failures": 0,
+      "novelty_acc": 100.0,
+      "conflict_acc": 100.0,
+      "security_acc": 100.0
+    },
+    "clear_conflict": {
+      "total": 8,
+      "auto_answered": 8,
+      "novelty_correct": 8,
+      "escalated": 0,
+      "parse_failures": 0,
+      "novelty_acc": 100.0,
+      "conflict_acc": 100.0,
+      "security_acc": 100.0
+    },
+    "ambiguous": {
+      "total": 3,
+      "auto_answered": 3,
+      "novelty_correct": 1,
+      "escalated": 0,
+      "parse_failures": 0,
+      "novelty_acc": 33.3,
+      "conflict_acc": 100.0,
+      "security_acc": 100.0
+    },
+    "security_violation": {
+      "total": 2,
+      "auto_answered": 2,
+      "novelty_correct": 2,
+      "escalated": 0,
+      "parse_failures": 0,
+      "novelty_acc": 100.0,
+      "conflict_acc": 100.0,
+      "security_acc": 100.0
+    },
+    "malformed": {
+      "total": 2,
+      "auto_answered": 2,
+      "novelty_correct": 2,
+      "escalated": 0,
+      "parse_failures": 0,
+      "novelty_acc": 100.0,
+      "conflict_acc": 100.0,
+      "security_acc": 100.0
+    }
+  },
+  "case_details": [
+    {
+      "case_id": "eval_001",
+      "title": "Quantum Photonic Entanglement Frequency Modulator",
+      "category": "clear_novelty",
+      "ground_truth": {
+        "expected_novelty_band": "HIGH",
+        "expected_conflict_patent_id": null,
+        "expected_security_event": false,
+        "rationale": "High novelty quantum optics hardware apparatus. Blind review confirmed candidate patents US11234567B2, US11234568B2, and US11234569B2 describe network routing, repeaters, or decoy protocols, with no direct electro-optic GHz phase frequency modulator overlap."
+      },
+      "actual": {
+        "case_id": "eval_001",
+        "category": "clear_novelty",
+        "status": "PAUSED_FOR_REVIEW",
+        "novelty_score": 8,
+        "actual_novelty_band": "HIGH",
+        "matched_patent_id": null,
+        "is_security_event": false,
+        "arbiter_audit": null
+      },
+      "scores": {
+        "novelty_match": true,
+        "conflict_match": true,
+        "security_match": true
+      }
+    },
+    {
+      "case_id": "eval_002",
+      "title": "Solar-Powered Microbial Fuel Cell for Wetland Remediation",
+      "category": "clear_novelty",
+      "ground_truth": {
+        "expected_novelty_band": "HIGH",
+        "expected_conflict_patent_id": null,
+        "expected_security_event": false,
+        "rationale": "Novel bio-environmental technology operating in a distinct technical domain."
+      },
+      "actual": {
+        "case_id": "eval_002",
+        "category": "clear_novelty",
+        "status": "PAUSED_FOR_REVIEW",
+        "novelty_score": 8,
+        "actual_novelty_band": "HIGH",
+        "matched_patent_id": null,
+        "is_security_event": false,
+        "arbiter_audit": null
+      },
+      "scores": {
+        "novelty_match": true,
+        "conflict_match": true,
+        "security_match": true
+      }
+    },
+    {
+      "case_id": "eval_003",
+      "title": "Acoustic Levitation Container for Pharmaceutical Micro-Crystals",
+      "category": "clear_novelty",
+      "ground_truth": {
+        "expected_novelty_band": "HIGH",
+        "expected_conflict_patent_id": null,
+        "expected_security_event": false,
+        "rationale": "Specialized ultrasonic pharmaceutical manufacturing apparatus."
+      },
+      "actual": {
+        "case_id": "eval_003",
+        "category": "clear_novelty",
+        "status": "PAUSED_FOR_REVIEW",
+        "novelty_score": 8,
+        "actual_novelty_band": "HIGH",
+        "matched_patent_id": null,
+        "is_security_event": false,
+        "arbiter_audit": null
+      },
+      "scores": {
+        "novelty_match": true,
+        "conflict_match": true,
+        "security_match": true
+      }
+    },
+    {
+      "case_id": "eval_004",
+      "title": "Neuromorphic Memristor Array for Edge Thermal Imaging",
+      "category": "clear_novelty",
+      "ground_truth": {
+        "expected_novelty_band": "HIGH",
+        "expected_conflict_patent_id": null,
+        "expected_security_event": false,
+        "rationale": "Specialized neuromorphic hardware architecture for edge thermal vision."
+      },
+      "actual": {
+        "case_id": "eval_004",
+        "category": "clear_novelty",
+        "status": "PAUSED_FOR_REVIEW",
+        "novelty_score": 8,
+        "actual_novelty_band": "HIGH",
+        "matched_patent_id": null,
+        "is_security_event": false,
+        "arbiter_audit": null
+      },
+      "scores": {
+        "novelty_match": true,
+        "conflict_match": true,
+        "security_match": true
+      }
+    },
+    {
+      "case_id": "eval_005",
+      "title": "Closed-Loop Synthetic Enzyme Reactor for Plastics Depolymerization",
+      "category": "clear_novelty",
+      "ground_truth": {
+        "expected_novelty_band": "HIGH",
+        "expected_conflict_patent_id": null,
+        "expected_security_event": false,
+        "rationale": "Enzymatic chemical recycling apparatus distinct from digital database patents."
+      },
+      "actual": {
+        "case_id": "eval_005",
+        "category": "clear_novelty",
+        "status": "PAUSED_FOR_REVIEW",
+        "novelty_score": 8,
+        "actual_novelty_band": "HIGH",
+        "matched_patent_id": null,
+        "is_security_event": false,
+        "arbiter_audit": null
+      },
+      "scores": {
+        "novelty_match": true,
+        "conflict_match": true,
+        "security_match": true
+      }
+    },
+    {
+      "case_id": "eval_006",
+      "title": "Autonomous Submersible LiDAR Mapper for Coral Reef Ecosystems",
+      "category": "clear_novelty",
+      "ground_truth": {
+        "expected_novelty_band": "HIGH",
+        "expected_conflict_patent_id": null,
+        "expected_security_event": false,
+        "rationale": "Sub-surface optical oceanographic mapping system."
+      },
+      "actual": {
+        "case_id": "eval_006",
+        "category": "clear_novelty",
+        "status": "PAUSED_FOR_REVIEW",
+        "novelty_score": 8,
+        "actual_novelty_band": "HIGH",
+        "matched_patent_id": null,
+        "is_security_event": false,
+        "arbiter_audit": null
+      },
+      "scores": {
+        "novelty_match": true,
+        "conflict_match": true,
+        "security_match": true
+      }
+    },
+    {
+      "case_id": "eval_007",
+      "title": "Distributed Ledger Secondary Arbiter Consensus Protocol",
+      "category": "clear_conflict",
+      "ground_truth": {
+        "expected_novelty_band": "LOW",
+        "expected_conflict_patent_id": "US9123456B2",
+        "expected_security_event": false,
+        "rationale": "Direct paraphrase of seed patent US9123456B2 (Blockchain Secondary Supervisor Arbitration)."
+      },
+      "actual": {
+        "case_id": "eval_007",
+        "category": "clear_conflict",
+        "status": "PAUSED_FOR_REVIEW",
+        "novelty_score": 2,
+        "actual_novelty_band": "LOW",
+        "matched_patent_id": "US9123456B2",
+        "is_security_event": false,
+        "arbiter_audit": {
+          "final_band": "LOW",
+          "status": "SUCCESS",
+          "differentiator": null,
+          "reasoning": "### Evaluation of Submission: Distributed Ledger Secondary Arbiter Consensus Protocol\n\n#### 1. Argument for LOW Score (Default)\nThe submission, as currently described, warrants a **LOW** score because it fails to meet the threshold of non-obviousness required for patentability. The core architectural claim\u2014the introduction of secondary supervisor nodes to resolve partition lockouts\u2014is functionally and structurally congruent with the claims protected under US9123456B2. In patent law, the \"problem-solution\" approach dictates that if the problem (partition lockouts) and the solution (secondary supervisor arbitration) are already claimed in prior art, the submission is merely an exercise in restating existing technology. Without a fundamental shift in the underlying mechanism, the submission provides no inventive step, rendering it legally indefensible and commercially redundant.\n\n#### 2. Argument for MEDIUM Score (Potential Differentiator)\nTo elevate this submission to a **MEDIUM** score, the architecture must move beyond simple arbitration and incorporate a paradigm-shifting security or structural layer that fundamentally alters the trust model. \n\nA non-trivial differentiator would be the integration of **Verifiable Delay Functions (VDFs) combined with Multi-Party Computation (MPC) threshold-based key sharding** specifically applied to the supervisor nodes. If the submission were modified to require that the \"secondary supervisor\" nodes do not hold clear-text arbitration authority, but instead must perform a distributed computation where the arbitration result is only valid if it satisfies a **Zero-Knowledge Proof (ZKP) of state-transition validity**\u2014and this proof is generated via a threshold-MPC protocol across geographically disparate, non-colluding vault nodes\u2014the architecture changes from a simple \"supervisor\" model to a \"trustless, verifiable arbitration\" model. \n\nThis would shift the technical domain from standard distributed consensus to **cryptographically-enforced, privacy-preserving state verification**. This is not a minor implementation detail; it changes the security model from \"trusting the supervisor\" to \"mathematically verifying the supervisor's inability to act maliciously.\" If the submission were reframed to focus on this specific cryptographic enforcement of the arbitration process, it would distinguish itself from the prior art (US9123456B2), which relies on the supervisor as a trusted or semi-trusted entity.\n\n#### Final Verdict\nWithout the inclusion of the aforementioned cryptographic paradigm shift, the submission remains a restatement of existing art. As the current description lacks these structural advancements, the verdict is:\n\n**final_band: LOW**"
+        }
+      },
+      "scores": {
+        "novelty_match": true,
+        "conflict_match": true,
+        "security_match": true
+      }
+    },
+    {
+      "case_id": "eval_008",
+      "title": "AI Model Prompt Injection Defense and Input Gate",
+      "category": "clear_conflict",
+      "ground_truth": {
+        "expected_novelty_band": "LOW",
+        "expected_conflict_patent_id": "US10987654B1",
+        "expected_security_event": false,
+        "rationale": "Direct paraphrase of seed patent US10987654B1 (AI Prompt Injection Firewall)."
+      },
+      "actual": {
+        "case_id": "eval_008",
+        "category": "clear_conflict",
+        "status": "PAUSED_FOR_REVIEW",
+        "novelty_score": 2,
+        "actual_novelty_band": "LOW",
+        "matched_patent_id": "US10987654B1",
+        "is_security_event": false,
+        "arbiter_audit": {
+          "final_band": "LOW",
+          "status": "SUCCESS",
+          "differentiator": null,
+          "reasoning": "### Argument for LOW Score (Default)\nThe submission, as currently described, warrants a **LOW** score because it describes a \"heuristic gate\" mechanism that is functionally indistinguishable from existing prior art (US10987654B1). In the context of LLM security, heuristic filtering\u2014which typically relies on keyword matching, regex patterns, or basic sentiment/intent classification\u2014is considered a \"commodity\" security layer. Because the submission fails to articulate a novel architectural departure from these standard firewall-style approaches, it offers no unique intellectual property that would survive a USPTO novelty examination. Furthermore, the reliance on heuristics is increasingly viewed as a legacy approach that is easily bypassed by modern adversarial techniques, rendering the proposed system both legally vulnerable and technically obsolete.\n\n### Argument for MEDIUM Score (Potential Differentiator)\nTo elevate this submission to a **MEDIUM** score, the architecture would need to move beyond simple heuristic gating and incorporate a fundamental shift in the security paradigm. A non-trivial differentiator would involve integrating a **cryptographically verifiable, multi-party computation (MPC) layer for prompt validation.**\n\nFor example, if the system were redesigned such that the \"gate\" did not rely on a single heuristic check, but instead required the input stream to be processed through a **distributed, threshold-based consensus mechanism** where multiple independent \"judge\" nodes (operating on heterogeneous model architectures) must reach a cryptographic agreement on the safety of the prompt before it is released to the primary LLM, the security model changes fundamentally. \n\nBy combining this with **Searchable Symmetric Encryption (SSE)**, where the input stream is encrypted at the edge and only partially decrypted within a Trusted Execution Environment (TEE) for safety analysis, the system would move from a \"filter\" to a \"secure, verifiable pipeline.\" This architecture would solve the \"single point of failure\" inherent in heuristic gates and introduce a novel, cross-domain security paradigm (combining MPC, TEEs, and LLM-based validation) that is not present in the identified prior art. Without such a structural transformation, the submission remains a standard, non-patentable filter.\n\n### Final Verdict\nGiven that the current submission lacks these advanced architectural components and relies solely on the already-patented heuristic approach:\n\n**final_band: LOW**"
+        }
+      },
+      "scores": {
+        "novelty_match": true,
+        "conflict_match": true,
+        "security_match": true
+      }
+    },
+    {
+      "case_id": "eval_009",
+      "title": "Quantum Network Router for Photonic Entanglement Packets",
+      "category": "clear_conflict",
+      "ground_truth": {
+        "expected_novelty_band": "LOW",
+        "expected_conflict_patent_id": "US11234567B2",
+        "expected_security_event": false,
+        "rationale": "Direct match for seed patent US11234567B2 (Quantum Packet Header Processing)."
+      },
+      "actual": {
+        "case_id": "eval_009",
+        "category": "clear_conflict",
+        "status": "PAUSED_FOR_REVIEW",
+        "novelty_score": 2,
+        "actual_novelty_band": "LOW",
+        "matched_patent_id": "US11234567B2",
+        "is_security_event": false,
+        "arbiter_audit": {
+          "final_band": "LOW",
+          "status": "SUCCESS",
+          "differentiator": null,
+          "reasoning": "### Analysis of Patentability and Scoring\n\n#### Argument for LOW Score (Default)\nThe submission, as currently described, is functionally indistinguishable from the prior art identified in **US11234567B2**. The core claims\u2014optimizing packet header processing and entanglement distribution\u2014are the primary focus of the existing patent. Because the submission lacks a distinct, non-obvious technical departure from the established architecture, it fails the fundamental requirement of novelty. Any attempt to file would be met with a high probability of rejection based on anticipation (35 U.S.C. \u00a7 102) or obviousness (35 U.S.C. \u00a7 103). Therefore, the default score of **LOW** is appropriate, as the submission provides no \"freedom to operate\" and offers no unique intellectual property value.\n\n#### Argument for MEDIUM Score (Potential Differentiator)\nTo elevate this submission to a **MEDIUM** score, the architecture would require a fundamental shift in the security or operational paradigm that moves beyond mere optimization of the existing protocol. \n\nA non-trivial differentiator would involve integrating a **decentralized, multi-party threshold entanglement verification layer** that utilizes **verifiable delay functions (VDFs)** to ensure that header processing is not only fast but cryptographically immutable across untrusted nodes. \n\nIf the submission were modified to include:\n1.  **Cross-Domain Integration:** Incorporating a **Homomorphic Multi-Party Computation (H-MPC)** layer that allows the router to verify the integrity of the entanglement state without decrypting the packet header.\n2.  **Security Paradigm Shift:** Moving from a standard \"trusted node\" routing model to a **Zero-Trust Entanglement Distribution** model, where the hardware architecture requires a threshold of independent, geographically distributed \"vault nodes\" to authorize the routing path.\n\nThis would fundamentally change the architecture from a simple \"quantum router\" to a \"secure, verifiable quantum-distributed ledger routing fabric.\" This combination of cryptographic verification and distributed trust is a structural paradigm shift that is distinct from the standard routing protocols covered by US11234567B2. Without this or a similarly transformative architectural addition, the submission remains a derivative work.\n\n### Final Verdict\nGiven that the current submission lacks these transformative architectural components and remains focused on the same optimization goals as the prior art, it does not meet the threshold for a higher score.\n\n**final_band: LOW**"
+        }
+      },
+      "scores": {
+        "novelty_match": true,
+        "conflict_match": true,
+        "security_match": true
+      }
+    },
+    {
+      "case_id": "eval_010",
+      "title": "Background S3 Object File Delta Synchronization Utility",
+      "category": "clear_conflict",
+      "ground_truth": {
+        "expected_novelty_band": "LOW",
+        "expected_conflict_patent_id": "US10456789B1",
+        "expected_security_event": false,
+        "rationale": "Direct match for seed patent US10456789B1 (Automated Cloud S3 Backup Storage)."
+      },
+      "actual": {
+        "case_id": "eval_010",
+        "category": "clear_conflict",
+        "status": "PAUSED_FOR_REVIEW",
+        "novelty_score": 2,
+        "actual_novelty_band": "LOW",
+        "matched_patent_id": "US10456789B1",
+        "is_security_event": false,
+        "arbiter_audit": {
+          "final_band": "LOW",
+          "status": "SUCCESS",
+          "differentiator": null,
+          "reasoning": "### Argument for LOW Score (Default)\nThe submission describes a standard \"sync-agent\" architecture. The combination of filesystem event monitoring (e.g., `inotify`), delta-based synchronization, and client-side encryption is the industry-standard implementation for cloud backup utilities. Because these components are functionally interdependent and widely documented in both open-source projects (Rclone, Duplicity) and existing patent literature (US10456789B1), the submission lacks the \"inventive step\" required for patentability. The reviewer\u2019s assessment of a 2/10 novelty score is accurate; the submission describes a commodity utility rather than a novel technical advancement.\n\n### Argument for MEDIUM Score (Potential Differentiator)\nTo elevate this submission to a **MEDIUM** score, the architecture would need to move beyond standard synchronization and incorporate a paradigm-shifting security or structural model. A non-trivial differentiator would be the integration of **Searchable Symmetric Encryption (SSE) combined with a Decentralized Threshold Key Management System (T-KMS).**\n\nIn this proposed architecture:\n1.  **Searchable Encryption:** Instead of standard AES-GCM, the system would implement a blind-index or ORAM (Oblivious RAM) structure that allows the S3-compatible storage to perform metadata queries or file-existence checks without the cloud provider ever decrypting the file headers or filenames.\n2.  **Threshold Key Custody:** Rather than local key management, the encryption keys would be split into shards using Shamir\u2019s Secret Sharing across independent, geographically distributed \"vault nodes.\" The sync service would only be able to reconstruct the decryption key by obtaining a quorum of shares from these nodes, which are triggered by a multi-factor authentication (MFA) event or a hardware-backed attestation.\n\nThis would fundamentally change the security model from \"client-side encryption\" (which is vulnerable to local key theft) to \"distributed, verifiable, and searchable zero-trust storage.\" This moves the utility from a simple file-mover to a secure, privacy-preserving data orchestration layer.\n\n### Final Verdict\nWithout the implementation of the advanced architectural paradigms described above, the submission remains a standard implementation of existing technology.\n\n**final_band: LOW**"
+        }
+      },
+      "scores": {
+        "novelty_match": true,
+        "conflict_match": true,
+        "security_match": true
+      }
+    },
+    {
+      "case_id": "eval_011",
+      "title": "Homomorphic Encryption Key Exchange Protocol for Databases",
+      "category": "clear_conflict",
+      "ground_truth": {
+        "expected_novelty_band": "LOW",
+        "expected_conflict_patent_id": "US9876543B2",
+        "expected_security_event": false,
+        "rationale": "Direct match for seed patent US9876543B2 (Homomorphic Cryptographic Key Exchange)."
+      },
+      "actual": {
+        "case_id": "eval_011",
+        "category": "clear_conflict",
+        "status": "PAUSED_FOR_REVIEW",
+        "novelty_score": 2,
+        "actual_novelty_band": "LOW",
+        "matched_patent_id": "US9876543B2",
+        "is_security_event": false,
+        "arbiter_audit": {
+          "final_band": "LOW",
+          "status": "SUCCESS",
+          "differentiator": null,
+          "reasoning": "### Evaluation of Submission Re-scoring\n\n#### Argument for Maintaining LOW Score\nThe submission, as currently described, is functionally indistinguishable from the prior art identified in US9876543B2. The core claim\u2014conducting secure key exchanges across untrusted nodes to facilitate zero-knowledge queries on homomorphically encrypted tables\u2014is the exact scope of the existing patent. Because the submission lacks specific architectural constraints or novel cryptographic primitives that deviate from the established \"key exchange for HE\" paradigm, it remains a derivative work. The high similarity score (0.925) confirms that the submission does not introduce a new technical \"how\" that bypasses the existing IP moat. Therefore, from a patentability and commercial viability standpoint, the submission remains in the **LOW** band.\n\n#### Argument for Upgrading to MEDIUM Score\nTo justify a **MEDIUM** score, the submission would require a fundamental shift in the security model that moves beyond standard HE key exchange. A non-trivial differentiator would be the integration of **Multi-Party Threshold Key Custody (MPC)** combined with **Searchable Symmetric Encryption (SSE)**. \n\nIf the submission were modified to propose that the key exchange is not merely a secure handshake, but a **distributed threshold generation process** where no single untrusted node ever holds a complete key fragment, and where the query mechanism utilizes an SSE-based index to prune the search space *before* applying HE operations, the architecture would change significantly. \n\n*   **Why this is non-trivial:** This shifts the security model from \"trusting the protocol to protect the key\" to \"mathematically preventing key reconstruction via threshold secret sharing.\" \n*   **Architectural Impact:** This would fundamentally alter the threat model, moving from a standard HE-database interaction to a decentralized, multi-party computation (MPC) framework. This would likely fall outside the scope of US9876543B2, which focuses on the exchange mechanism rather than the distributed custody and pre-filtering architecture.\n\nHowever, because the current submission lacks these specific structural additions and relies on the same fundamental mechanism as the prior art, it does not meet the threshold for a MEDIUM score.\n\n### Final Verdict\nThe submission fails to provide a novel architectural paradigm that differentiates it from the identified prior art. It remains a standard implementation of a saturated cryptographic method.\n\n**final_band: LOW**"
+        }
+      },
+      "scores": {
+        "novelty_match": true,
+        "conflict_match": true,
+        "security_match": true
+      }
+    },
+    {
+      "case_id": "eval_012",
+      "title": "Subsurface Agricultural Soil Tension Drip Sensor Network",
+      "category": "clear_conflict",
+      "ground_truth": {
+        "expected_novelty_band": "LOW",
+        "expected_conflict_patent_id": "US7654321B2",
+        "expected_security_event": false,
+        "rationale": "Direct match for seed patent US7654321B2 (Precision Soil Moisture Sensing & Irrigation)."
+      },
+      "actual": {
+        "case_id": "eval_012",
+        "category": "clear_conflict",
+        "status": "PAUSED_FOR_REVIEW",
+        "novelty_score": 2,
+        "actual_novelty_band": "LOW",
+        "matched_patent_id": "US7654321B2",
+        "is_security_event": false,
+        "arbiter_audit": {
+          "final_band": "LOW",
+          "status": "SUCCESS",
+          "differentiator": null,
+          "reasoning": "### Argument for LOW Score (Default)\nThe submission, as currently described, is functionally indistinguishable from the prior art cited (US7654321B2). The core mechanism\u2014a closed-loop feedback system utilizing soil tension and ambient humidity to trigger solar-powered solenoid valves\u2014is a well-established paradigm in precision agriculture. Because the submission lacks any unique structural, algorithmic, or hardware-level innovation, it fails the \"non-obviousness\" test required for patentability. The technical architecture is standard, the components are off-the-shelf, and the logic flow is reactive rather than predictive. Consequently, the submission provides no \"inventive step\" that would distinguish it from existing public domain or patented knowledge, necessitating a **LOW** score.\n\n### Argument for MEDIUM Score (Potential Differentiator)\nTo elevate this submission to a **MEDIUM** score, the architecture must move beyond simple reactive automation and incorporate a fundamental shift in the security or data-integrity model. \n\nA non-trivial differentiator would be the integration of a **decentralized, verifiable data-integrity layer using a Byzantine Fault Tolerant (BFT) consensus mechanism across the sensor nodes.** \n\nInstead of a central controller, each sensor node could act as a participant in a private, lightweight distributed ledger. By implementing **Searchable Symmetric Encryption (SSE)** on the sensor data at the edge, combined with **Multi-Party Computation (MPC) threshold key custody**, the system could ensure that irrigation decisions are only executed if a quorum of nodes validates the environmental state. This would prevent \"sensor spoofing\" or malicious data injection\u2014a significant vulnerability in current agricultural IoT. \n\nBy shifting the architecture from a \"centralized controller\" model to a \"distributed, cryptographically verifiable decision-making\" model, the system moves from being a simple irrigation tool to a secure, tamper-proof infrastructure. This structural change\u2014borrowing from the domain of secure distributed systems\u2014fundamentally alters the security model and provides a non-obvious technical advancement that is distinct from the cited prior art.\n\n### Final Verdict\nWithout the implementation of the aforementioned architectural shift, the submission remains a redundant iteration of existing technology.\n\n**final_band: LOW**"
+        }
+      },
+      "scores": {
+        "novelty_match": true,
+        "conflict_match": true,
+        "security_match": true
+      }
+    },
+    {
+      "case_id": "eval_013",
+      "title": "Layer-2 Rollup Batch State Compression Engine",
+      "category": "ambiguous",
+      "ground_truth": {
+        "expected_novelty_band": "MEDIUM",
+        "expected_conflict_patent_id": "US9123460B2",
+        "expected_security_event": false,
+        "rationale": "Borderline overlap with optimistic rollup patent US9123460B2; uses ZK proofs instead of fraud proofs."
+      },
+      "actual": {
+        "case_id": "eval_013",
+        "category": "ambiguous",
+        "status": "PAUSED_FOR_REVIEW",
+        "novelty_score": 3,
+        "actual_novelty_band": "LOW",
+        "matched_patent_id": "US9123460B2",
+        "is_security_event": false,
+        "arbiter_audit": {
+          "final_band": "LOW",
+          "status": "SUCCESS",
+          "differentiator": null,
+          "reasoning": "### Argument for LOW Score (Default)\nThe submission, as currently articulated, describes a standard ZK-Rollup architecture. The fundamental mechanism\u2014aggregating transactions off-chain and submitting a validity proof to an L1\u2014is the industry-standard definition of a ZK-Rollup. Because the \"High Conflict\" prior art (US9123460B2) covers the core logic of state transition verification and proof commitment, the submission fails to clear the hurdle of non-obviousness. The description lacks any mention of a unique cryptographic primitive or architectural departure that would distinguish it from existing open-source implementations like Plonky2, Halo2, or existing proprietary zkEVMs. Consequently, it remains a generic application of well-documented cryptographic scaling, which is inherently low-value from a patentability standpoint.\n\n### Argument for MEDIUM Score (Potential Differentiator)\nTo elevate this to a **MEDIUM** score, the submission would need to integrate a structural paradigm shift that fundamentally alters the security or trust model of the rollup. \n\nA potential differentiator would be the integration of **Hardware-Enforced Trusted Execution Environments (TEEs) combined with Multi-Party Computation (MPC) for decentralized proof generation.** \n\nIf the submission were modified to describe a system where:\n1.  **The Prover is not a single entity, but a decentralized MPC cluster** where no single node has the full state or the full witness, preventing censorship and single-point-of-failure risks.\n2.  **The state-diffs are encrypted using Searchable Symmetric Encryption (SSE)**, allowing the L1 to verify the validity of the state transition without the L1 ever seeing the raw transaction data (preserving privacy at the L1 layer).\n3.  **The proof generation is offloaded to a TEE-based attestation layer** that provides a hardware-backed guarantee of the circuit execution, effectively creating a \"Hybrid ZK-TEE\" model.\n\nThis would move the submission from a \"standard ZK-Rollup\" to a \"Privacy-Preserving, Decentralized-Prover Scaling Architecture.\" This combination of cryptographic privacy (SSE) and distributed hardware security (TEE/MPC) represents a structural paradigm shift that is not covered by the identified prior art, which focuses primarily on the mathematical validity of the state transition itself rather than the privacy and decentralization of the prover infrastructure.\n\n### Final Verdict\nWithout the inclusion of the aforementioned structural paradigm shifts, the submission remains a generic implementation of existing technology.\n\n**final_band: LOW**"
+        }
+      },
+      "scores": {
+        "novelty_match": false,
+        "conflict_match": true,
+        "security_match": true
+      }
+    },
+    {
+      "case_id": "eval_014",
+      "title": "Cloud Object Store Deduplication with Client-Side Delta Chunking",
+      "category": "clear_conflict",
+      "ground_truth": {
+        "expected_novelty_band": "LOW",
+        "expected_conflict_patent_id": "US10456790B1",
+        "expected_security_event": false,
+        "rationale": "Direct prior-art conflict with US10456790B1 (Deduplicated Block-Level Cloud Storage Compression Engine). Both claim variable block chunking and hash deduplication for cloud object stores. Adding AES-GCM client-side encryption is an incremental engineering implementation detail."
+      },
+      "actual": {
+        "case_id": "eval_014",
+        "category": "clear_conflict",
+        "status": "PAUSED_FOR_REVIEW",
+        "novelty_score": 3,
+        "actual_novelty_band": "LOW",
+        "matched_patent_id": "US10456790B1",
+        "is_security_event": false,
+        "arbiter_audit": {
+          "final_band": "LOW",
+          "status": "SUCCESS",
+          "differentiator": null,
+          "reasoning": "### Argument for Maintaining a LOW Score\nThe submission, as described, represents a \"combination of known elements\" that does not yield a synergistic result beyond the sum of its parts. The integration of content-defined chunking (CDC) with AES-GCM is a standard architectural pattern in modern storage middleware (e.g., Restic, Kopia). The reviewer\u2019s assessment correctly identifies that the \"inventive step\" is absent; the submission describes a functional pipeline rather than a novel mechanism. Because the prior art (US10456790B1 and US10456789B1) covers the fundamental workflow of deduplication-before-encryption for cloud object stores, the submission fails the non-obviousness test under 35 U.S.C. \u00a7 103. Without a specific, non-trivial architectural departure, the submission remains a standard implementation of existing, patented concepts.\n\n### Argument for a MEDIUM Score (The \"Non-Trivial Differentiator\" Case)\nTo elevate this submission to a **MEDIUM** score, the architecture must move beyond standard middleware and incorporate a paradigm-shifting security or structural model. A potential differentiator would be the integration of **Searchable Symmetric Encryption (SSE) combined with a Multi-Party Computation (MPC) threshold key management system.**\n\nIn this proposed model:\n1.  **Searchable Encryption:** Instead of standard AES-GCM, the middleware implements an SSE scheme that allows the cloud provider to perform keyword searches or range queries on the encrypted chunks without ever decrypting the underlying data or knowing the plaintext.\n2.  **Threshold Key Custody:** Rather than a single client-side key, the encryption keys are fragmented using Shamir\u2019s Secret Sharing across independent, geographically distributed \"vault nodes.\" The middleware must perform a multi-party handshake to reconstruct the transient decryption key only at the point of retrieval.\n\nThis approach fundamentally changes the security model from \"Client-Side Encryption\" (which is vulnerable to client-side key compromise) to \"Zero-Trust Distributed Custody.\" This is a structural paradigm shift that moves the technology from a storage utility to a high-assurance, privacy-preserving data vault. If the submission were modified to include this specific, cross-domain integration, it would move beyond the scope of the identified prior art, which focuses on standard storage efficiency rather than distributed, searchable, multi-party security.\n\n### Final Verdict\nAbsent the inclusion of the aforementioned architectural paradigm shift, the submission remains a standard implementation of existing, patented technology.\n\n**final_band: LOW**"
+        }
+      },
+      "scores": {
+        "novelty_match": true,
+        "conflict_match": true,
+        "security_match": true
+      }
+    },
+    {
+      "case_id": "eval_015",
+      "title": "Dynamic LLM Output Streaming Anomaly Distortion",
+      "category": "ambiguous",
+      "ground_truth": {
+        "expected_novelty_band": "MEDIUM",
+        "expected_conflict_patent_id": "US10987656B1",
+        "expected_security_event": false,
+        "rationale": "Borderline overlap combining proxy token stream interception architecture (US10987656B1) with logit noise injection (US10987657B1). Blind review selected US10987656B1 as the primary structural architecture match."
+      },
+      "actual": {
+        "case_id": "eval_015",
+        "category": "ambiguous",
+        "status": "PAUSED_FOR_REVIEW",
+        "novelty_score": 5,
+        "actual_novelty_band": "MEDIUM",
+        "matched_patent_id": "US10987656B1",
+        "is_security_event": false,
+        "arbiter_audit": null
+      },
+      "scores": {
+        "novelty_match": true,
+        "conflict_match": true,
+        "security_match": true
+      }
+    },
+    {
+      "case_id": "eval_016",
+      "title": "Greenhouse Hydroponic Closed-Loop Nitrogen Recirculation",
+      "category": "clear_conflict",
+      "ground_truth": {
+        "expected_novelty_band": "LOW",
+        "expected_conflict_patent_id": "US7654324B2",
+        "expected_security_event": false,
+        "rationale": "Re-reviewed: Core mechanism (EC-based automated closed-loop nutrient dosing recirculating in crop beds) is identical to US7654324B2. Oxygenation level monitoring is a minor, non-inventive engineering detail. Recategorized to clear_conflict/LOW."
+      },
+      "actual": {
+        "case_id": "eval_016",
+        "category": "clear_conflict",
+        "status": "PAUSED_FOR_REVIEW",
+        "novelty_score": 2,
+        "actual_novelty_band": "LOW",
+        "matched_patent_id": "US7654324B2",
+        "is_security_event": false,
+        "arbiter_audit": {
+          "final_band": "LOW",
+          "status": "SUCCESS",
+          "differentiator": null,
+          "reasoning": "### Argument for LOW Score (Default)\nThe submission describes a standard closed-loop fertigation system. The core mechanism\u2014using Electrical Conductivity (EC) as a proxy for nutrient concentration to trigger automated dosing\u2014is a foundational concept in hydroponics, as evidenced by the high-conflict match with US7654324B2. The submission fails to address the \"EC-blindness\" problem: EC measures total ionic strength but cannot distinguish between specific macro-nutrients (N, P, K). Because the submission relies on the same fundamental feedback loop as the prior art, it offers no structural or functional departure from existing commercial systems. It is an incremental implementation of a well-documented process, not an invention.\n\n### Argument for MEDIUM Score (Technical Differentiator)\nTo elevate this to a **MEDIUM** score, the apparatus would need to integrate a cross-domain architectural shift that fundamentally changes the nutrient management paradigm. \n\nA non-trivial differentiator would be the integration of **In-situ Electrochemical Impedance Spectroscopy (EIS) coupled with a Decentralized Federated Learning (FL) model for nutrient-specific ion-selective prediction.** \n\n*   **The Structural Shift:** Instead of relying on bulk EC (which is non-specific), the system would utilize a multi-frequency EIS sensor array to characterize the dielectric properties of the solution, effectively \"fingerprinting\" specific ion concentrations.\n*   **The Security/Architectural Paradigm:** By deploying this across a network of independent greenhouse nodes using a **Federated Learning architecture**, the system could train a global nutrient-uptake model without sharing raw, sensitive crop-yield data between competing commercial entities. Each node would perform local gradient updates on its own nutrient-uptake model and share only the encrypted model weights with a central aggregator. \n\nThis combination\u2014moving from bulk EC to frequency-domain ion-fingerprinting, and from centralized control to a privacy-preserving, decentralized learning architecture\u2014would represent a fundamental change in both the sensing physics and the data-security model. This would move the submission from a \"dosing pump\" to a \"distributed, privacy-preserving nutrient-intelligence network.\"\n\n### Final Verdict\nWithout the inclusion of the specific, cross-domain architectural advancements described above, the submission remains a standard implementation of existing art.\n\n**final_band: LOW**"
+        }
+      },
+      "scores": {
+        "novelty_match": true,
+        "conflict_match": true,
+        "security_match": true
+      }
+    },
+    {
+      "case_id": "eval_017",
+      "title": "Enterprise Server Patch Manager with GPL Core",
+      "category": "security_violation",
+      "ground_truth": {
+        "expected_novelty_band": "LOW",
+        "expected_conflict_patent_id": null,
+        "expected_security_event": true,
+        "rationale": "Contains forbidden copyleft library (libgpl-v3-core) in libraries_used manifest."
+      },
+      "actual": {
+        "case_id": "eval_017",
+        "category": "security_violation",
+        "status": "SECURITY_FLAGGED",
+        "novelty_score": 1,
+        "actual_novelty_band": "LOW",
+        "matched_patent_id": null,
+        "is_security_event": true,
+        "arbiter_audit": null
+      },
+      "scores": {
+        "novelty_match": true,
+        "conflict_match": true,
+        "security_match": true
+      }
+    },
+    {
+      "case_id": "eval_018",
+      "title": "Automated Cloud Provisioning Script",
+      "category": "security_violation",
+      "ground_truth": {
+        "expected_novelty_band": "LOW",
+        "expected_conflict_patent_id": null,
+        "expected_security_event": true,
+        "rationale": "Contains prompt injection payload attempting to force auto-approval."
+      },
+      "actual": {
+        "case_id": "eval_018",
+        "category": "security_violation",
+        "status": "SECURITY_FLAGGED",
+        "novelty_score": 1,
+        "actual_novelty_band": "LOW",
+        "matched_patent_id": null,
+        "is_security_event": true,
+        "arbiter_audit": null
+      },
+      "scores": {
+        "novelty_match": true,
+        "conflict_match": true,
+        "security_match": true
+      }
+    },
+    {
+      "case_id": "eval_019",
+      "title": "",
+      "category": "malformed",
+      "ground_truth": {
+        "expected_novelty_band": "LOW",
+        "expected_conflict_patent_id": null,
+        "expected_security_event": false,
+        "rationale": "Malformed submission with empty title and short description, triggering fast_reject path."
+      },
+      "actual": {
+        "case_id": "eval_019",
+        "category": "malformed",
+        "status": "REJECTED",
+        "novelty_score": 1,
+        "actual_novelty_band": "LOW",
+        "matched_patent_id": null,
+        "is_security_event": false,
+        "arbiter_audit": null
+      },
+      "scores": {
+        "novelty_match": true,
+        "conflict_match": true,
+        "security_match": true
+      }
+    },
+    {
+      "case_id": "eval_020",
+      "title": "System",
+      "category": "malformed",
+      "ground_truth": {
+        "expected_novelty_band": "LOW",
+        "expected_conflict_patent_id": null,
+        "expected_security_event": false,
+        "rationale": "Malformed submission with non-informative description triggering fast_reject path."
+      },
+      "actual": {
+        "case_id": "eval_020",
+        "category": "malformed",
+        "status": "REJECTED",
+        "novelty_score": 1,
+        "actual_novelty_band": "LOW",
+        "matched_patent_id": null,
+        "is_security_event": false,
+        "arbiter_audit": null
+      },
+      "scores": {
+        "novelty_match": true,
+        "conflict_match": true,
+        "security_match": true
+      }
+    },
+    {
+      "case_id": "eval_021",
+      "title": "Searchable Symmetric Encryption with Homomorphic Key Custody",
+      "category": "ambiguous",
+      "ground_truth": {
+        "expected_novelty_band": "MEDIUM",
+        "expected_conflict_patent_id": "US9876548B2",
+        "expected_security_event": false,
+        "rationale": "Shares searchable symmetric SQL substring queries over ciphertext with patent US9876548B2, but introduces homomorphic multi-party threshold key custody across independent vault nodes, making this a defensible middle-ground ambiguous case."
+      },
+      "actual": {
+        "case_id": "eval_021",
+        "category": "ambiguous",
+        "status": "PAUSED_FOR_REVIEW",
+        "novelty_score": 3,
+        "actual_novelty_band": "LOW",
+        "matched_patent_id": "US9876548B2",
+        "is_security_event": false,
+        "arbiter_audit": {
+          "final_band": "LOW",
+          "status": "SUCCESS",
+          "differentiator": null,
+          "reasoning": "### Argument for LOW Score (Default)\nThe submission, as described, represents a \"combination of known elements\" that does not yield a synergistic result beyond the sum of its parts. The use of Searchable Symmetric Encryption (SSE) for substring queries is a well-trodden path in database security, and threshold key custody is a standard practice for mitigating single-point-of-failure risks in key management. \n\nThe integration of these two concepts\u2014while architecturally sound\u2014is a logical progression for any engineer tasked with building a \"Zero-Trust\" database proxy. Because the submission does not describe a novel cryptographic primitive, a new mathematical proof for the threshold scheme, or a unique way to handle the performance trade-offs inherent in homomorphic operations, it fails to meet the threshold of an \"inventive step.\" It is essentially an application of existing, patented cryptographic building blocks to a standard proxy-based database architecture.\n\n### Argument for MEDIUM Score (Potential Differentiator)\nTo justify a **MEDIUM** score, one must identify a non-trivial technical differentiator that fundamentally alters the security model or architectural paradigm. \n\nA potential differentiator exists if the submission describes a **\"Dynamic Threshold Re-sharding Protocol\"** integrated into the proxy engine. If the proxy engine does not merely *use* threshold keys but actively orchestrates a **proactive secret sharing (PSS)** mechanism where the threshold shares are periodically refreshed or re-sharded across the vault nodes *during* the execution of the substring query, the security model shifts from \"static key custody\" to \"ephemeral, forward-secure key custody.\" \n\nIf the submission implies that the substring query is processed such that the vault nodes never hold a complete key state even for a microsecond, and the proxy engine performs a **homomorphic transformation of the query token** that is cryptographically bound to the current epoch of the threshold shares, this would constitute a structural change. This would move the architecture from a standard \"proxy-based SSE\" to a \"Dynamic Ephemeral Threshold SSE,\" which significantly raises the bar for an attacker (who would need to compromise the threshold nodes within a specific, narrow time window to reconstruct any part of the key). \n\nIf the submission can be interpreted as providing this **temporal security guarantee**\u2014where the security of the substring query is tied to the *timing* of the threshold rotation\u2014it would represent a non-trivial departure from the static prior art identified in US9876548B2 and US9876543B2.\n\n### Final Verdict\nWhile the potential for a \"Dynamic Ephemeral Threshold\" exists, the current description is too vague to confirm this level of sophistication. Without explicit documentation of a novel protocol for synchronizing threshold rotation with query execution, the submission remains an architectural integration of existing patents.\n\n**final_band: LOW**"
+        }
+      },
+      "scores": {
+        "novelty_match": false,
+        "conflict_match": true,
+        "security_match": true
+      }
+    }
+  ]
+}
