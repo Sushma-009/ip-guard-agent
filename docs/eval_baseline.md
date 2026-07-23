@@ -12,6 +12,8 @@ This document establishes the official benchmark baseline for the IP-Guard singl
 
 > [!IMPORTANT]
 > **Sample Size Caveat**: Baseline measured on n=20 hand-labeled cases; treat as directional, not statistically definitive.
+> 
+> **Known Gap**: The patent corpus is synthetic, not real USPTO data; a real-data swap is planned before the final demo and production deployment.
 
 ---
 
