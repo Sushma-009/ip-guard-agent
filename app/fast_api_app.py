@@ -31,7 +31,7 @@ from expense_agent.agent import root_agent
 from expense_agent.db import (
     initialize_db, create_organization, create_user, get_user_by_email,
     create_submission, get_submission, list_submissions, update_submission_status,
-    create_audit_log, list_audit_logs
+    update_submission_analysis, create_audit_log, list_audit_logs
 )
 from expense_agent.auth import (
     create_access_token, decode_access_token, hash_password, verify_password
@@ -72,6 +72,32 @@ app.title = "ambient-expense-agent"
 app.description = "API for interacting with the Agent ambient-expense-agent"
 
 from expense_agent.vector_store import get_vector_store_stats
+import re
+
+def _parse_novelty_score(text: str):
+    """Extract novelty score from innovation analysis text.
+    
+    Returns an integer 1-10 if cleanly parseable, or None.
+    NEVER returns 0 or any default placeholder integer.
+    """
+    if not text or not isinstance(text, str):
+        return None
+    patterns = [
+        r"Novelty\s+Score:\s*(\d+)",
+        r"Novelty\s+Assessment.*?:\s*(\d+)",
+        r"novelty_score.*?:\s*(\d+)",
+        r"(\d+)\s*/\s*10",
+    ]
+    for pattern in patterns:
+        m = re.search(pattern, text, re.IGNORECASE)
+        if m:
+            try:
+                val = int(m.group(1))
+                if 1 <= val <= 10:
+                    return val
+            except (ValueError, TypeError):
+                continue
+    return None
 
 # Re-use the same session service database configuration as DevServer/ApiServer
 session_service = create_session_service_from_options(
@@ -399,6 +425,12 @@ async def submit_innovation(
             reason = getattr(final_output, "reason", "")
             
     update_submission_status(org_id, submission_id, status, reason)
+    
+    # Persist innovation_analysis and novelty_score from session state.
+    # _parse_novelty_score returns None (not 0) if unparseable.
+    innovation_analysis = session_state.get("innovation_analysis")
+    novelty_score = _parse_novelty_score(innovation_analysis)
+    update_submission_analysis(org_id, submission_id, innovation_analysis, novelty_score)
 
     return {
         "status": status,

@@ -230,14 +230,24 @@ def check_prior_art(query: str, tool_context: ToolContext = None) -> dict:
     }
     
     if original_description:
-        audit_res = audit_query(original_description, query)
-        corrected_query = audit_res["corrected_query"]
-        audit_trail_query = {
-            "original_llm_query": query,
-            "is_drifted": audit_res["is_drifted"],
-            "corrected_query": corrected_query,
-            "reason": audit_res["reason"]
-        }
+        try:
+            audit_res = audit_query(original_description, query)
+            corrected_query = audit_res["corrected_query"]
+            audit_trail_query = {
+                "original_llm_query": query,
+                "is_drifted": audit_res["is_drifted"],
+                "corrected_query": corrected_query,
+                "reason": audit_res["reason"]
+            }
+        except Exception as e:
+            audit_trail_query = {
+                "original_llm_query": query,
+                "status": "AUDIT_FAILED",
+                "error": str(e),
+                "is_drifted": False,
+                "corrected_query": query,
+                "reason": f"Query audit failed with error: {e}"
+            }
         
     if tool_context and tool_context.state:
         tool_context.state["query_audit"] = audit_trail_query

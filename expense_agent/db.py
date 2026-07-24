@@ -53,6 +53,8 @@ def initialize_db():
                 libraries_used TEXT,
                 status TEXT NOT NULL,
                 reason TEXT,
+                innovation_analysis TEXT,
+                novelty_score INTEGER,
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                 FOREIGN KEY (org_id) REFERENCES organizations(org_id) ON DELETE CASCADE,
                 FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE CASCADE
@@ -129,12 +131,13 @@ def get_submission(org_id: str, submission_id: str) -> dict:
     conn = get_connection()
     try:
         row = conn.execute(
-            "SELECT submission_id, org_id, user_id, title, description, libraries_used, status, reason, created_at FROM submissions WHERE org_id = ? AND submission_id = ?;",
+            "SELECT submission_id, org_id, user_id, title, description, libraries_used, status, reason, innovation_analysis, novelty_score, created_at FROM submissions WHERE org_id = ? AND submission_id = ?;",
             (org_id, submission_id)
         ).fetchone()
         if row:
             res = dict(row)
             res["libraries_used"] = json.loads(res["libraries_used"]) if res["libraries_used"] else []
+            # novelty_score is stored as INTEGER allowing NULL — do not coerce None to 0
             return res
         return None
     finally:
@@ -145,12 +148,12 @@ def list_submissions(org_id: str, user_id: str = None) -> list:
     try:
         if user_id:
             rows = conn.execute(
-                "SELECT submission_id, org_id, user_id, title, description, libraries_used, status, reason, created_at FROM submissions WHERE org_id = ? AND user_id = ? ORDER BY created_at DESC;",
+                "SELECT submission_id, org_id, user_id, title, description, libraries_used, status, reason, innovation_analysis, novelty_score, created_at FROM submissions WHERE org_id = ? AND user_id = ? ORDER BY created_at DESC;",
                 (org_id, user_id)
             ).fetchall()
         else:
             rows = conn.execute(
-                "SELECT submission_id, org_id, user_id, title, description, libraries_used, status, reason, created_at FROM submissions WHERE org_id = ? ORDER BY created_at DESC;",
+                "SELECT submission_id, org_id, user_id, title, description, libraries_used, status, reason, innovation_analysis, novelty_score, created_at FROM submissions WHERE org_id = ? ORDER BY created_at DESC;",
                 (org_id,)
             ).fetchall()
             
@@ -158,6 +161,7 @@ def list_submissions(org_id: str, user_id: str = None) -> list:
         for r in rows:
             res = dict(r)
             res["libraries_used"] = json.loads(res["libraries_used"]) if res["libraries_used"] else []
+            # novelty_score is stored as INTEGER allowing NULL — do not coerce None to 0
             results.append(res)
         return results
     finally:
@@ -170,6 +174,24 @@ def update_submission_status(org_id: str, submission_id: str, status: str, reaso
         conn.execute(
             "UPDATE submissions SET status = ?, reason = ? WHERE org_id = ? AND submission_id = ?;",
             (status, reason, org_id, submission_id)
+        )
+        conn.commit()
+    finally:
+        conn.close()
+
+def update_submission_analysis(org_id: str, submission_id: str, innovation_analysis: str, novelty_score):
+    """Persists innovation_analysis and novelty_score to the submissions table.
+    
+    novelty_score accepts None explicitly — sqlite3 binds Python None as SQL NULL.
+    No coercion to 0 or any default integer value occurs anywhere in this function.
+    """
+    conn = get_connection()
+    try:
+        # novelty_score is passed directly to the parameter binding.
+        # Python None → SQL NULL. No int() coercion, no fallback.
+        conn.execute(
+            "UPDATE submissions SET innovation_analysis = ?, novelty_score = ? WHERE org_id = ? AND submission_id = ?;",
+            (innovation_analysis, novelty_score, org_id, submission_id)
         )
         conn.commit()
     finally:
