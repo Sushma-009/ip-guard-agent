@@ -1,0 +1,61 @@
+/* ============================================================
+   IP-Guard Design Tokens
+   ============================================================
+   Two surface systems scoped via data-theme attributes.
+   Never mixed within a single screen except the shared
+   case-detail screen (Task 3), which intentionally borrows
+   from both.
+
+   RULE: No component CSS may reference a raw hex value.
+   All colors, fonts, and borders must derive from these tokens.
+
+   WCAG AA Contrast Verification (all pairs ≥ 4.5:1):
+   -------------------------------------------------------
+   Submitter surface:
+     --text-primary  #1C1C1A on #F7F5F0  → 15.66:1  ✓
+     --text-muted    #6B6862 on #F7F5F0  →  5.10:1  ✓
+     --stamp-red     #B23A2E on #F7F5F0  →  5.45:1  ✓
+     --verified-green#2F6B4F on #F7F5F0  →  5.78:1  ✓
+     --ink-navy      #1B3A5C on #F7F5F0  → 10.67:1  ✓
+     --ink-navy-deep #0F2540 on #F7F5F0  → 14.18:1  ✓
+   Counsel surface:
+     --text-primary  #E8E6E1 on #16181C  → 14.25:1  ✓
+     --text-muted    #8A8C90 on #16181C  →  5.28:1  ✓
+     --signal-amber  #E8A33D on #16181C  →  8.24:1  ✓
+   ============================================================ */
+
+/* --- Submitter Surface: "Patent Examiner's Desk" --- */
+[data-theme="submitter"] {
+  --paper-bg:         #F7F5F0;
+  --ink-navy:         #1B3A5C;
+  --ink-navy-deep:    #0F2540;
+  --stamp-red:        #B23A2E;
+  --verified-green:   #2F6B4F;
+  --text-primary:     #1C1C1A;
+  --text-muted:       #6B6862;
+  --border-hairline:  rgba(27, 58, 92, 0.16);
+
+  --font-display:     'Source Serif Pro', Georgia, serif;
+  --font-body:        'Inter', system-ui, sans-serif;
+  --font-mono:        'IBM Plex Mono', monospace;
+}
+
+/* --- Counsel Surface: "Compliance Console" --- */
+[data-theme="counsel"] {
+  --console-bg:       #16181C;
+  --console-panel:    #1E2126;
+  --console-border:   #2C2F35;
+  --signal-amber:     #E8A33D;
+  --text-primary:     #E8E6E1;
+  --text-muted:       #8A8C90;
+
+  /*
+   * Intentional: --font-display reuses Inter (no serif on the dense
+   * compliance dashboard). This is a deliberate design choice, not
+   * an oversight — the counsel surface prioritizes information density
+   * and scanability over the submitter surface's document-like gravitas.
+   */
+  --font-display:     'Inter', system-ui, sans-serif;
+  --font-body:        'Inter', system-ui, sans-serif;
+  --font-mono:        'IBM Plex Mono', monospace;
+}
