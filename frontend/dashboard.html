@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>IP-Guard — Counsel Dashboard</title>
+  <meta name="description" content="IP Counsel dashboard for reviewing and triaging patent submissions.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Source+Serif+Pro:wght@400;600;700&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/app/tokens.css">
+  <link rel="stylesheet" href="/app/dashboard.css">
+</head>
+<body data-theme="counsel" class="dashboard-page">
+
+  <header class="dash-header">
+    <h1>IP-Guard Counsel Dashboard</h1>
+    <div class="dash-header-right">
+      <span class="dash-role" id="dash-role"></span>
+      <button class="dash-logout" id="dash-logout">Sign out</button>
+    </div>
+  </header>
+
+  <div class="controls-bar">
+    <div class="filter-group" id="filter-group">
+      <button class="filter-btn active" data-filter="all">All</button>
+      <button class="filter-btn" data-filter="pending">Pending</button>
+      <button class="filter-btn" data-filter="decided">Decided</button>
+      <button class="filter-btn" data-filter="flagged">Flagged</button>
+    </div>
+    <select class="sort-select" id="sort-select">
+      <option value="date">Sort: Newest first</option>
+      <option value="similarity">Sort: Highest similarity</option>
+    </select>
+  </div>
+
+  <div class="queue-wrapper">
+    <div class="queue-loading" id="queue-loading">Loading submissions…</div>
+    <div class="queue-count" id="queue-count"></div>
+    <table class="queue-table" id="queue-table" style="display: none;">
+      <thead>
+        <tr>
+          <th>Case ID</th>
+          <th>Title</th>
+          <th>Similarity</th>
+          <th>Status</th>
+          <th>Date</th>
+        </tr>
+      </thead>
+      <tbody id="queue-body"></tbody>
+    </table>
+    <div class="queue-empty" id="queue-empty" style="display: none;">No submissions match the current filter.</div>
+  </div>
+
+  <script src="/app/auth.js"></script>
+  <script>
+    /* --- Auth Guard --- */
+    if (!requireRole(['counsel', 'admin'])) {
+      throw new Error('Unauthorized');
+    }
+    document.getElementById('dash-role').textContent = getRole().toUpperCase();
+    document.getElementById('dash-logout').addEventListener('click', logout);
+
+    /* --- State --- */
+    let allSubmissions = [];
+    let auditMap = {};  /* submission_id -> audit log entry */
+    let currentFilter = 'all';
+    let currentSort = 'date';
+
+    /* --- Data Fetching --- */
+    async function loadData() {
+      const [subRes, auditRes] = await Promise.all([
+        apiFetch('/submissions'),
+        apiFetch('/audit-logs')
+      ]);
+
+      if (subRes && subRes.ok) {
+        allSubmissions = await subRes.json();
+      }
+
+      if (auditRes && auditRes.ok) {
+        const auditLogs = await auditRes.json();
+        /* Index by submission_id — take the latest entry per submission */
+        auditMap = {};
+        for (const log of auditLogs) {
+          auditMap[log.submission_id] = log;
+        }
+      }
+
+      renderQueue();
+    }
+
+    /* --- Similarity Score Extraction --- */
+    function getMaxSimilarity(submissionId) {
+      const audit = auditMap[submissionId];
+      if (!audit) return null;  /* No audit data → pending/unavailable */
+
+      const verifier = audit.verifier_audit;
+      if (!verifier || verifier.length === 0) return 0;  /* Audit ran, no matches → clean */
+
+      /* Find max score from verified matches */
+      let maxScore = 0;
+      let hasVerified = false;
+      for (const v of verifier) {
+        if (v.is_verified) {
+          hasVerified = true;
+          /* verifier_audit entries don't directly carry raw_similarity_score,
+             but the classification tells us it's a real conflict */
+          maxScore = Math.max(maxScore, 0.55);  /* At least HIGH tier if verified */
+        }
+      }
+
+      return hasVerified ? maxScore : 0;
+    }
+
+    /* --- Rendering --- */
+    function renderQueue() {
+      const tbody = document.getElementById('queue-body');
+      const table = document.getElementById('queue-table');
+      const loading = document.getElementById('queue-loading');
+      const empty = document.getElementById('queue-empty');
+      const countEl = document.getElementById('queue-count');
+
+      loading.style.display = 'none';
+
+      /* Filter */
+      let filtered = allSubmissions;
+      if (currentFilter === 'pending') {
+        filtered = filtered.filter(s => s.status === 'PAUSED_FOR_REVIEW');
+      } else if (currentFilter === 'decided') {
+        filtered = filtered.filter(s => ['APPROVED_FOR_FILING', 'REJECTED'].includes(s.status));
+      } else if (currentFilter === 'flagged') {
+        filtered = filtered.filter(s => s.status === 'SECURITY_FLAGGED');
+      }
+
+      /* Sort */
+      if (currentSort === 'similarity') {
+        filtered.sort((a, b) => {
+          const sa = getMaxSimilarity(a.submission_id);
+          const sb = getMaxSimilarity(b.submission_id);
+          /* Null (pending) sorts to bottom */
+          if (sa === null && sb === null) return 0;
+          if (sa === null) return 1;
+          if (sb === null) return -1;
+          return sb - sa;
+        });
+      } else {
+        filtered.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+      }
+
+      if (filtered.length === 0) {
+        table.style.display = 'none';
+        empty.style.display = 'block';
+        countEl.textContent = '';
+        return;
+      }
+
+      table.style.display = 'table';
+      empty.style.display = 'none';
+      countEl.textContent = filtered.length + ' submission' + (filtered.length !== 1 ? 's' : '');
+
+      tbody.innerHTML = '';
+      for (const sub of filtered) {
+        const row = document.createElement('tr');
+        row.className = 'queue-row';
+        row.addEventListener('click', () => {
+          window.location.href = '/app/case.html?id=' + encodeURIComponent(sub.submission_id);
+        });
+
+        /* Case ID */
+        const tdId = document.createElement('td');
+        tdId.className = 'cell-case-id';
+        tdId.textContent = sub.submission_id;
+        tdId.title = sub.submission_id;
+
+        /* Title */
+        const tdTitle = document.createElement('td');
+        tdTitle.className = 'cell-title';
+        tdTitle.textContent = sub.title;
+
+        /* Similarity Meter */
+        const tdSim = document.createElement('td');
+        tdSim.innerHTML = buildSimMeter(sub.submission_id);
+
+        /* Status Pill */
+        const tdStatus = document.createElement('td');
+        tdStatus.innerHTML = buildStatusPill(sub.status);
+
+        /* Date */
+        const tdDate = document.createElement('td');
+        tdDate.className = 'cell-date';
+        tdDate.textContent = formatDate(sub.created_at);
+
+        row.append(tdId, tdTitle, tdSim, tdStatus, tdDate);
+        tbody.appendChild(row);
+      }
+    }
+
+    function buildSimMeter(submissionId) {
+      const score = getMaxSimilarity(submissionId);
+
+      if (score === null) {
+        /* Pending / no data */
+        return '<div class="sim-meter">' +
+          '<div class="sim-bar-track sim-pending"></div>' +
+          '<span class="sim-label">Pending</span>' +
+          '</div>';
+      }
+
+      if (score === 0) {
+        /* Clean — confirmed no conflict */
+        return '<div class="sim-meter">' +
+          '<div class="sim-bar-track sim-clean"></div>' +
+          '<span class="sim-label">Clean</span>' +
+          '</div>';
+      }
+
+      /* Conflict — show colored bar */
+      let colorClass = 'sim-green';
+      if (score >= 0.55) colorClass = 'sim-red';
+      else if (score >= 0.35) colorClass = 'sim-amber';
+
+      const widthPct = Math.round(score * 100);
+      return '<div class="sim-meter">' +
+        '<div class="sim-bar-track">' +
+        '<div class="sim-bar-fill ' + colorClass + '" style="width: ' + widthPct + '%"></div>' +
+        '</div>' +
+        '<span class="sim-label">' + widthPct + '%</span>' +
+        '</div>';
+    }
+
+    function buildStatusPill(status) {
+      const map = {
+        'PAUSED_FOR_REVIEW': { cls: 'pill-pending', label: 'Pending' },
+        'APPROVED_FOR_FILING': { cls: 'pill-approved', label: 'Approved' },
+        'REJECTED': { cls: 'pill-rejected', label: 'Rejected' },
+        'SECURITY_FLAGGED': { cls: 'pill-flagged', label: 'Flagged' },
+        'UNKNOWN': { cls: 'pill-processing', label: 'Processing' }
+      };
+      const cfg = map[status] || { cls: 'pill-processing', label: 'Processing' };
+      return '<span class="status-pill ' + cfg.cls + '">' + cfg.label + '</span>';
+    }
+
+    function formatDate(isoStr) {
+      if (!isoStr) return '—';
+      const d = new Date(isoStr);
+      return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) +
+        ' ' + d.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+    }
+
+    /* --- Filter Controls --- */
+    document.getElementById('filter-group').addEventListener('click', (e) => {
+      if (e.target.classList.contains('filter-btn')) {
+        document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+        e.target.classList.add('active');
+        currentFilter = e.target.dataset.filter;
+        renderQueue();
+      }
+    });
+
+    document.getElementById('sort-select').addEventListener('change', (e) => {
+      currentSort = e.target.value;
+      renderQueue();
+    });
+
+    /* --- Init --- */
+    loadData();
+  </script>
+</body>
+</html>

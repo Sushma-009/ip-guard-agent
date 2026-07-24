@@ -71,6 +71,13 @@ app: FastAPI = get_fast_api_app(
 app.title = "ambient-expense-agent"
 app.description = "API for interacting with the Agent ambient-expense-agent"
 
+# Serve frontend static files at /app/ (same origin — no CORS needed)
+from fastapi.staticfiles import StaticFiles
+import pathlib
+_frontend_dir = pathlib.Path(AGENT_DIR) / "frontend"
+if _frontend_dir.is_dir():
+    app.mount("/app", StaticFiles(directory=str(_frontend_dir), html=True), name="frontend")
+
 from expense_agent.vector_store import get_vector_store_stats
 import re
 

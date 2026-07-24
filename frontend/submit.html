@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>IP-Guard — Submit Innovation</title>
+  <meta name="description" content="Submit a new innovation for patent screening and prior-art analysis.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Source+Serif+Pro:wght@400;600;700&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/app/tokens.css">
+  <link rel="stylesheet" href="/app/submit.css">
+</head>
+<body data-theme="submitter" class="submit-page">
+
+  <header class="submit-header">
+    <h1>IP-Guard</h1>
+    <div class="header-actions">
+      <span class="header-role" id="header-role"></span>
+      <button class="logout-btn" id="logout-btn">Sign out</button>
+    </div>
+  </header>
+
+  <main class="submit-container" id="submit-container">
+    <div class="submit-form-header">
+      <h2>New Innovation Submission</h2>
+      <p>Describe your invention below. The system will scan for prior-art conflicts, check for license violations, and route your submission to IP Counsel for review.</p>
+    </div>
+
+    <form id="submit-form">
+      <div class="field-group">
+        <label for="title-input">Title</label>
+        <input type="text" id="title-input" placeholder="e.g., Quantum Photonic Entanglement Frequency Modulator" required>
+      </div>
+
+      <div class="field-group">
+        <label for="desc-input">Description</label>
+        <span class="field-hint">Minimum 15 characters. Describe the technical mechanism, not just the business goal.</span>
+        <textarea id="desc-input" placeholder="Describe the core technical mechanism, architecture, and what distinguishes this invention from prior art…" required></textarea>
+      </div>
+
+      <div class="field-group">
+        <label>Libraries / Dependencies Used</label>
+        <span class="field-hint">Type a library name and press Enter or comma to add. These are checked against the copyleft license registry.</span>
+        <div class="chip-input-wrapper" id="chip-wrapper">
+          <input type="text" class="chip-text-input" id="chip-input" placeholder="e.g., tensorflow, openssl">
+        </div>
+      </div>
+
+      <button type="submit" class="submit-btn" id="submit-btn">Submit for review</button>
+    </form>
+
+    <!-- Outcome panels -->
+    <div class="outcome outcome-rejected" id="outcome-rejected">
+      <div class="outcome-icon">✗</div>
+      <h3>Submission rejected</h3>
+      <p id="rejected-reason"></p>
+    </div>
+
+    <div class="outcome outcome-flagged" id="outcome-flagged">
+      <div class="outcome-icon">⚠</div>
+      <h3>Security review flagged this submission</h3>
+      <p id="flagged-reason"></p>
+    </div>
+
+    <div class="outcome outcome-queued" id="outcome-queued">
+      <div class="outcome-icon">✓</div>
+      <h3>Submission queued for IP Counsel review</h3>
+      <p>Your invention has been analyzed and is now awaiting review by IP Counsel. You will be notified of the decision.</p>
+      <div class="outcome-case-id" id="queued-case-id"></div>
+    </div>
+  </main>
+
+  <!-- Redaction scanning overlay -->
+  <div class="redaction-overlay" id="redaction-overlay">
+    <div class="redaction-panel">
+      <div class="redaction-title">
+        🔒 Scanning for sensitive content…
+      </div>
+      <div class="redaction-text" id="redaction-text"></div>
+      <div class="scan-progress">
+        <div class="scan-progress-bar" id="scan-progress-bar"></div>
+      </div>
+      <div class="scan-label" id="scan-label">Initializing security scan…</div>
+    </div>
+  </div>
+
+  <script src="/app/auth.js"></script>
+  <script>
+    /* --- Auth Guard --- */
+    if (!requireRole(['submitter', 'admin'])) {
+      throw new Error('Unauthorized');
+    }
+    document.getElementById('header-role').textContent = getRole().toUpperCase();
+    document.getElementById('logout-btn').addEventListener('click', logout);
+
+    /* --- Chip/Tag Multi-Input --- */
+    const chipWrapper = document.getElementById('chip-wrapper');
+    const chipInput = document.getElementById('chip-input');
+    let libraries = [];
+
+    function addChip(name) {
+      name = name.trim().toLowerCase();
+      if (!name || libraries.includes(name)) return;
+      libraries.push(name);
+      renderChips();
+    }
+
+    function removeChip(name) {
+      libraries = libraries.filter(l => l !== name);
+      renderChips();
+    }
+
+    function renderChips() {
+      /* Remove existing chips */
+      chipWrapper.querySelectorAll('.chip').forEach(c => c.remove());
+      /* Add chips before the input */
+      libraries.forEach(lib => {
+        const chip = document.createElement('span');
+        chip.className = 'chip';
+        chip.innerHTML = lib + ' <button type="button" class="chip-remove" aria-label="Remove ' + lib + '">×</button>';
+        chip.querySelector('.chip-remove').addEventListener('click', () => removeChip(lib));
+        chipWrapper.insertBefore(chip, chipInput);
+      });
+    }
+
+    chipInput.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' || e.key === ',') {
+        e.preventDefault();
+        addChip(chipInput.value);
+        chipInput.value = '';
+      }
+      if (e.key === 'Backspace' && chipInput.value === '' && libraries.length > 0) {
+        removeChip(libraries[libraries.length - 1]);
+      }
+    });
+
+    chipInput.addEventListener('blur', () => {
+      if (chipInput.value.trim()) {
+        addChip(chipInput.value);
+        chipInput.value = '';
+      }
+      chipWrapper.classList.remove('focused');
+    });
+
+    chipInput.addEventListener('focus', () => chipWrapper.classList.add('focused'));
+    chipWrapper.addEventListener('click', () => chipInput.focus());
+
+    /* --- Redaction Animation --- */
+    const SECRET_PATTERNS = [
+      /AKIA[0-9A-Z]{16}/g,
+      /sk-[a-zA-Z0-9]{32,}/g,
+      /ghp_[a-zA-Z0-9]{36}/g,
+      /[a-f0-9]{32,64}/g,
+      /-----BEGIN\s+(RSA\s+)?PRIVATE\s+KEY-----/g,
+      /AIza[0-9A-Za-z_-]{35}/g
+    ];
+
+    function runRedactionAnimation(text) {
+      return new Promise(resolve => {
+        const overlay = document.getElementById('redaction-overlay');
+        const textEl = document.getElementById('redaction-text');
+        const progressBar = document.getElementById('scan-progress-bar');
+        const scanLabel = document.getElementById('scan-label');
+
+        overlay.classList.add('active');
+        textEl.textContent = text;
+
+        /* Find all secret-like matches */
+        let matches = [];
+        for (const pattern of SECRET_PATTERNS) {
+          pattern.lastIndex = 0;
+          let m;
+          while ((m = pattern.exec(text)) !== null) {
+            matches.push({ start: m.index, end: m.index + m[0].length, text: m[0] });
+          }
+        }
+
+        /* Animate the scan line */
+        const duration = 2000;
+        const startTime = Date.now();
+        let redactedCount = 0;
+
+        function tick() {
+          const elapsed = Date.now() - startTime;
+          const progress = Math.min(elapsed / duration, 1);
+          progressBar.style.width = (progress * 100) + '%';
+
+          const scanPosition = progress * text.length;
+          scanLabel.textContent = 'Scanning position ' + Math.floor(scanPosition) + ' of ' + text.length + '…';
+
+          /* Redact matches as the scan line passes them */
+          for (const match of matches) {
+            if (match.start <= scanPosition && !match.redacted) {
+              match.redacted = true;
+              redactedCount++;
+              /* Replace the match in the display with a blacked-out span */
+              const html = textEl.innerHTML;
+              const escapedText = match.text.replace(/[&<>"']/g, c => ({
+                '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+              })[c]);
+              const redactedHtml = '<span class="redacted">' + '█'.repeat(match.text.length) + '</span>';
+              textEl.innerHTML = html.replace(escapedText, redactedHtml);
+            }
+          }
+
+          if (progress < 1) {
+            requestAnimationFrame(tick);
+          } else {
+            scanLabel.textContent = redactedCount > 0
+              ? redactedCount + ' potential secret(s) detected and redacted'
+              : 'Scan complete — no secrets detected';
+            setTimeout(() => {
+              overlay.classList.remove('active');
+              resolve();
+            }, 600);
+          }
+        }
+
+        requestAnimationFrame(tick);
+      });
+    }
+
+    /* --- Form Submission --- */
+    const form = document.getElementById('submit-form');
+    const submitBtn = document.getElementById('submit-btn');
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+
+      const title = document.getElementById('title-input').value.trim();
+      const description = document.getElementById('desc-input').value.trim();
+
+      if (description.length < 15) {
+        alert('Description must be at least 15 characters.');
+        return;
+      }
+
+      submitBtn.disabled = true;
+      submitBtn.textContent = 'Scanning…';
+
+      /* Run redaction animation while the API call is in flight */
+      const [animDone, apiResponse] = await Promise.allSettled([
+        runRedactionAnimation(description),
+        apiFetch('/submissions', {
+          method: 'POST',
+          body: JSON.stringify({
+            title: title,
+            description: description,
+            libraries_used: libraries
+          })
+        })
+      ]);
+
+      /* Hide form */
+      form.style.display = 'none';
+
+      const res = apiResponse.status === 'fulfilled' ? apiResponse.value : null;
+
+      if (!res || !res.ok) {
+        document.getElementById('rejected-reason').textContent =
+          'Network error or server unavailable. Please try again later.';
+        document.getElementById('outcome-rejected').classList.add('visible');
+        submitBtn.disabled = false;
+        submitBtn.textContent = 'Submit for review';
+        return;
+      }
+
+      const data = await res.json();
+
+      /* Route to outcome state */
+      if (data.status === 'REJECTED') {
+        document.getElementById('rejected-reason').textContent =
+          'Submission rejected — ' + (data.reason || 'Incomplete or malformed submission.');
+        document.getElementById('outcome-rejected').classList.add('visible');
+      } else if (data.status === 'SECURITY_FLAGGED') {
+        document.getElementById('flagged-reason').textContent =
+          (data.reason || 'Potential compliance violation detected.') +
+          ' IP Counsel has been notified.';
+        document.getElementById('outcome-flagged').classList.add('visible');
+      } else {
+        /* PAUSED_FOR_REVIEW or any other status */
+        document.getElementById('queued-case-id').textContent =
+          'Case ID: ' + (data.submission_id || '—');
+        document.getElementById('outcome-queued').classList.add('visible');
+      }
+
+      /* Add "submit another" link */
+      const outcomes = document.querySelectorAll('.outcome.visible');
+      outcomes.forEach(o => {
+        if (!o.querySelector('.new-submission-link')) {
+          const link = document.createElement('span');
+          link.className = 'new-submission-link';
+          link.textContent = 'Submit another invention';
+          link.addEventListener('click', () => {
+            o.classList.remove('visible');
+            form.style.display = '';
+            form.reset();
+            libraries = [];
+            renderChips();
+            submitBtn.disabled = false;
+            submitBtn.textContent = 'Submit for review';
+          });
+          o.appendChild(link);
+        }
+      });
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,386 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>IP-Guard — Case Detail</title>
+  <meta name="description" content="Case evidence and review screen for IP Counsel patent submission review.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Source+Serif+Pro:wght@400;600;700&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/app/tokens.css">
+  <link rel="stylesheet" href="/app/case.css">
+</head>
+<body data-theme="counsel" class="case-page">
+
+  <header class="case-header">
+    <div class="case-header-left">
+      <a class="case-back" href="/app/dashboard.html">← Dashboard</a>
+      <h1 class="case-header-title" id="case-header-title">Loading…</h1>
+    </div>
+    <div class="case-header-right">
+      <button class="dash-logout" id="case-logout" style="font-family:var(--font-body);font-size:0.75rem;font-weight:500;color:var(--text-muted);background:none;border:1px solid var(--console-border);border-radius:4px;padding:0.3rem 0.6rem;cursor:pointer;">Sign out</button>
+    </div>
+  </header>
+
+  <main class="case-content" id="case-content">
+    <div class="case-loading" id="case-loading">Loading case data…</div>
+  </main>
+
+  <script src="/app/auth.js"></script>
+  <script>
+    /* --- Auth Guard --- */
+    if (!requireRole(['counsel', 'admin'])) {
+      throw new Error('Unauthorized');
+    }
+    document.getElementById('case-logout').addEventListener('click', logout);
+
+    /* --- Parse submission ID from URL --- */
+    const params = new URLSearchParams(window.location.search);
+    const submissionId = params.get('id');
+
+    if (!submissionId) {
+      document.getElementById('case-loading').textContent = 'No case ID provided.';
+      throw new Error('Missing case ID');
+    }
+
+    /* --- Load Data --- */
+    async function loadCase() {
+      const [subRes, auditRes] = await Promise.all([
+        apiFetch('/submissions/' + encodeURIComponent(submissionId)),
+        apiFetch('/audit-logs')
+      ]);
+
+      if (!subRes || !subRes.ok) {
+        document.getElementById('case-loading').textContent = 'Case not found or access denied.';
+        return;
+      }
+
+      const sub = await subRes.json();
+      let audit = null;
+
+      if (auditRes && auditRes.ok) {
+        const logs = await auditRes.json();
+        audit = logs.find(l => l.submission_id === submissionId) || null;
+      }
+
+      renderCase(sub, audit);
+    }
+
+    /* --- Render All Sections --- */
+    function renderCase(sub, audit) {
+      document.getElementById('case-loading').style.display = 'none';
+      document.getElementById('case-header-title').textContent = sub.submission_id;
+
+      const content = document.getElementById('case-content');
+      let html = '';
+
+      /* Section 1: Original Submission */
+      html += renderSection1(sub);
+
+      /* Section 2: Matched Patents */
+      html += renderSection2(audit);
+
+      /* Section 3: Query Auditor Correction */
+      html += renderSection3(audit, sub);
+
+      /* Section 4: Match Verifier Classification */
+      html += renderSection4(audit);
+
+      /* Section 5: Conflict Arbiter Reasoning */
+      html += renderSection5(audit);
+
+      /* Section 6: Final AI Recommendation */
+      html += renderSection6(sub);
+
+      /* Section 7: Counsel Decision Controls */
+      html += renderSection7(sub);
+
+      content.innerHTML += html;
+
+      /* Wire up decision buttons */
+      wireDecisionControls(sub);
+    }
+
+    /* ---- Section 1: Original Submission ---- */
+    function renderSection1(sub) {
+      let libsHtml = '';
+      if (sub.libraries_used && sub.libraries_used.length > 0) {
+        libsHtml = '<div class="sub-libs">' +
+          sub.libraries_used.map(l => '<span class="sub-lib-chip">' + esc(l) + '</span>').join('') +
+          '</div>';
+      }
+
+      return '<div class="case-section">' +
+        '<div class="case-section-title">Original Submission</div>' +
+        '<h2 class="sub-title">' + esc(sub.title) + '</h2>' +
+        '<div class="sub-description">' + esc(sub.description) + '</div>' +
+        libsHtml +
+        '</div>';
+    }
+
+    /* ---- Section 2: Matched Patents ---- */
+    function renderSection2(audit) {
+      const verifier = audit ? audit.verifier_audit : null;
+
+      if (!verifier || verifier.length === 0) {
+        const msg = !audit ? 'No analysis yet' : 'No patent matches were found';
+        return '<div class="case-section">' +
+          '<div class="case-section-title">Matched Patents</div>' +
+          '<div class="no-data">' + msg + '</div>' +
+          '</div>';
+      }
+
+      let matchesHtml = '';
+      for (const v of verifier) {
+        if (!v.is_verified) continue;
+
+        const tierClass = v.category === 'VERIFIED_CONFLICT' ? 'tier-high' :
+                          v.category === 'VERIFIED_CONFLICT_WITH_DIFFERENTIATOR' ? 'tier-moderate' : 'tier-low';
+        const tierLabel = (v.category || 'UNKNOWN').replace(/_/g, ' ');
+
+        matchesHtml += '<div class="patent-match">' +
+          '<div class="patent-id">' + esc(v.patent_id || '—') + '</div>' +
+          '<div class="patent-tier ' + tierClass + '">' + tierLabel + '</div>' +
+          '</div>';
+      }
+
+      if (!matchesHtml) {
+        matchesHtml = '<div class="no-data">All matches were classified as spurious</div>';
+      }
+
+      return '<div class="case-section">' +
+        '<div class="case-section-title">Matched Patents</div>' +
+        matchesHtml +
+        '</div>';
+    }
+
+    /* ---- Section 3: Query Auditor Correction ---- */
+    function renderSection3(audit, sub) {
+      const qa = audit ? audit.query_audit : null;
+
+      /*
+       * Null-vs-failure logic:
+       * - qa is null AND status is REJECTED or SECURITY_FLAGGED → step was architecturally skipped → hide section
+       * - qa is null AND status is something else → shouldn't happen, show cautious "unavailable"
+       * - qa.status === "AUDIT_FAILED" → show explicit error
+       * - qa.is_drifted === true → show side-by-side diff
+       * - qa.is_drifted === false → no drift, nothing to show
+       */
+      const skippedStatuses = ['REJECTED', 'SECURITY_FLAGGED'];
+
+      if (!qa) {
+        if (skippedStatuses.includes(sub.status)) {
+          /* Legitimately skipped — don't show the section */
+          return '';
+        }
+        /* Shouldn't be null for a non-skipped status — show cautious state */
+        return '<div class="case-section">' +
+          '<div class="case-section-title">Query Auditor</div>' +
+          '<div class="no-data">Query audit data unavailable</div>' +
+          '</div>';
+      }
+
+      /* Explicit failure */
+      if (qa.status === 'AUDIT_FAILED') {
+        return '<div class="case-section">' +
+          '<div class="case-section-title">Query Auditor</div>' +
+          '<div class="query-audit-error">⚠ Query audit failed: ' + esc(qa.error || 'Unknown error') + '</div>' +
+          '</div>';
+      }
+
+      /* Rejected by parser — brief note, not a diff */
+      if (qa.reason && qa.reason.includes('Rejected by parser')) {
+        return '';  /* Skip for parser-rejected submissions */
+      }
+
+      /* No drift — nothing to show */
+      if (!qa.is_drifted) {
+        return '';
+      }
+
+      /* Drift detected — show side-by-side */
+      return '<div class="case-section">' +
+        '<div class="case-section-title">Query Auditor — Drift Correction</div>' +
+        '<div class="query-diff">' +
+          '<div class="query-column">' +
+            '<div class="query-column-label">Original LLM Query</div>' +
+            '<div class="query-column-text">' + esc(qa.original_llm_query || '') + '</div>' +
+          '</div>' +
+          '<div class="query-column">' +
+            '<div class="query-column-label">Corrected Query</div>' +
+            '<div class="query-column-text">' + esc(qa.corrected_query || '') + '</div>' +
+          '</div>' +
+        '</div>' +
+        '<div class="query-drift-reason">' + esc(qa.reason || '') + '</div>' +
+        '</div>';
+    }
+
+    /* ---- Section 4: Match Verifier Classification ---- */
+    function renderSection4(audit) {
+      const verifier = audit ? audit.verifier_audit : null;
+
+      if (!verifier || verifier.length === 0) {
+        const msg = !audit ? 'No analysis yet' : 'No patent matches were analyzed';
+        return '<div class="case-section">' +
+          '<div class="case-section-title">Match Verifier Classification</div>' +
+          '<div class="no-data">' + msg + '</div>' +
+          '</div>';
+      }
+
+      let entriesHtml = '';
+      for (const v of verifier) {
+        const isVerified = v.is_verified;
+        const badgeClass = isVerified ? 'badge-verified' : 'badge-spurious';
+        const badgeLabel = isVerified ? (v.category || 'VERIFIED') : 'SPURIOUS MATCH';
+
+        entriesHtml += '<div class="verifier-entry">' +
+          '<div class="verifier-header">' +
+            '<span class="verifier-patent-id">' + esc(v.patent_id || '—') + '</span>' +
+            '<span class="verifier-badge ' + badgeClass + '">' + badgeLabel + '</span>' +
+          '</div>' +
+          '<div class="verifier-reasoning">' + esc(v.reasoning || 'No reasoning provided.') + '</div>' +
+          '</div>';
+      }
+
+      return '<div class="case-section">' +
+        '<div class="case-section-title">Match Verifier Classification</div>' +
+        entriesHtml +
+        '</div>';
+    }
+
+    /* ---- Section 5: Conflict Arbiter Reasoning ---- */
+    function renderSection5(audit) {
+      const arb = audit ? audit.arbiter_audit : null;
+
+      if (!arb) return '';  /* No arbiter ran — section hidden */
+
+      const band = arb.final_band || 'UNKNOWN';
+      let bandClass = 'band-low';
+      if (band.includes('HIGH') || band.includes('CONFLICT')) bandClass = 'band-high';
+      else if (band.includes('MODERATE') || band.includes('MEDIUM')) bandClass = 'band-medium';
+
+      let diffHtml = '';
+      if (arb.differentiator) {
+        diffHtml = '<div class="arbiter-differentiator">Differentiator: ' + esc(arb.differentiator) + '</div>';
+      }
+
+      return '<div class="case-section">' +
+        '<div class="case-section-title">Conflict Arbiter Reasoning</div>' +
+        '<div class="arbiter-panel">' +
+          '<div class="arbiter-band ' + bandClass + '">' + esc(band) + '</div>' +
+          diffHtml +
+          '<div class="arbiter-reasoning-text">' + esc(arb.reasoning || 'No reasoning provided.') + '</div>' +
+        '</div>' +
+        '</div>';
+    }
+
+    /* ---- Section 6: Final AI Recommendation ---- */
+    function renderSection6(sub) {
+      const noveltyScore = sub.novelty_score;
+      const analysis = sub.innovation_analysis;
+
+      let scoreHtml;
+      if (noveltyScore === null || noveltyScore === undefined) {
+        scoreHtml = '<div class="novelty-badge">' +
+          '<div class="novelty-pending">Awaiting review</div>' +
+          '</div>';
+      } else {
+        scoreHtml = '<div class="novelty-badge">' +
+          '<div class="novelty-score-num">' + noveltyScore + '</div>' +
+          '<div class="novelty-score-label">/ 10 Novelty</div>' +
+          '</div>';
+      }
+
+      let analysisHtml;
+      if (!analysis) {
+        analysisHtml = '<div class="recommendation-text recommendation-unavailable">Analysis not yet available</div>';
+      } else {
+        analysisHtml = '<div class="recommendation-text">' + esc(analysis) + '</div>';
+      }
+
+      return '<div class="case-section">' +
+        '<div class="case-section-title">Final AI Recommendation</div>' +
+        '<div class="recommendation-row">' +
+          scoreHtml +
+          analysisHtml +
+        '</div>' +
+        '</div>';
+    }
+
+    /* ---- Section 7: Counsel Decision Controls ---- */
+    function renderSection7(sub) {
+      if (sub.status !== 'PAUSED_FOR_REVIEW') {
+        const statusLabel = sub.status === 'APPROVED_FOR_FILING' ? 'approved for filing' :
+                           sub.status === 'REJECTED' ? 'rejected' : sub.status.toLowerCase();
+        return '<div class="case-section">' +
+          '<div class="case-section-title">Counsel Decision</div>' +
+          '<div class="decision-already-decided">This case has already been ' + statusLabel + '.</div>' +
+          '</div>';
+      }
+
+      return '<div class="case-section">' +
+        '<div class="case-section-title">Counsel Decision</div>' +
+        '<div class="decision-controls">' +
+          '<textarea class="decision-comment" id="decision-comment" placeholder="Optional: add a note explaining your decision…"></textarea>' +
+          '<div class="decision-buttons">' +
+            '<button class="decision-btn btn-approve" id="btn-approve">Approve for filing</button>' +
+            '<button class="decision-btn btn-reject" id="btn-reject">Reject</button>' +
+          '</div>' +
+          '<div class="decision-result" id="decision-result"></div>' +
+        '</div>' +
+        '</div>';
+    }
+
+    /* ---- Wire Decision Buttons ---- */
+    function wireDecisionControls(sub) {
+      const approveBtn = document.getElementById('btn-approve');
+      const rejectBtn = document.getElementById('btn-reject');
+
+      if (!approveBtn || !rejectBtn) return;
+
+      async function submitDecision(decision) {
+        const comment = document.getElementById('decision-comment').value.trim();
+        approveBtn.disabled = true;
+        rejectBtn.disabled = true;
+
+        const res = await apiFetch('/submissions/' + encodeURIComponent(submissionId) + '/review', {
+          method: 'POST',
+          body: JSON.stringify({ decision, comment })
+        });
+
+        const resultEl = document.getElementById('decision-result');
+
+        if (res && res.ok) {
+          const data = await res.json();
+          const isApproved = decision === 'APPROVE';
+          resultEl.className = 'decision-result visible ' +
+            (isApproved ? 'decision-approved' : 'decision-rejected-result');
+          resultEl.textContent = isApproved
+            ? 'Case approved for filing.' + (comment ? ' Note: ' + comment : '')
+            : 'Case rejected.' + (comment ? ' Note: ' + comment : '');
+        } else {
+          resultEl.className = 'decision-result visible decision-rejected-result';
+          resultEl.textContent = 'Failed to submit decision. Please try again.';
+          approveBtn.disabled = false;
+          rejectBtn.disabled = false;
+        }
+      }
+
+      approveBtn.addEventListener('click', () => submitDecision('APPROVE'));
+      rejectBtn.addEventListener('click', () => submitDecision('REJECT'));
+    }
+
+    /* --- HTML Escaping --- */
+    function esc(str) {
+      if (!str) return '';
+      const div = document.createElement('div');
+      div.textContent = str;
+      return div.innerHTML;
+    }
+
+    /* --- Init --- */
+    loadCase();
+  </script>
+</body>
+</html>

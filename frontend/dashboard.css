@@ -1,0 +1,316 @@
+/* ============================================================
+   IP-Guard Counsel Dashboard Styles
+   Uses counsel palette: "Compliance Console"
+   All values reference tokens.css — no raw hex.
+   ============================================================ */
+
+.dashboard-page {
+  min-height: 100vh;
+  background: var(--console-bg);
+  font-family: var(--font-body);
+  color: var(--text-primary);
+}
+
+/* --- Header --- */
+
+.dash-header {
+  padding: 1rem 1.5rem;
+  border-bottom: 1px solid var(--console-border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.dash-header h1 {
+  font-family: var(--font-display);
+  font-size: 1.125rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin: 0;
+  letter-spacing: -0.01em;
+}
+
+.dash-header-right {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.dash-role {
+  font-size: 0.6875rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-muted);
+}
+
+.dash-logout {
+  font-family: var(--font-body);
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: var(--text-muted);
+  background: none;
+  border: 1px solid var(--console-border);
+  border-radius: 4px;
+  padding: 0.3rem 0.6rem;
+  cursor: pointer;
+  transition: color 0.15s ease, border-color 0.15s ease;
+}
+
+.dash-logout:hover {
+  color: var(--signal-amber);
+  border-color: var(--signal-amber);
+}
+
+/* --- Controls Bar --- */
+
+.controls-bar {
+  padding: 0.75rem 1.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  border-bottom: 1px solid var(--console-border);
+}
+
+.filter-group {
+  display: flex;
+  gap: 0.375rem;
+}
+
+.filter-btn {
+  font-family: var(--font-body);
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: var(--text-muted);
+  background: var(--console-panel);
+  border: 1px solid var(--console-border);
+  border-radius: 4px;
+  padding: 0.3rem 0.75rem;
+  cursor: pointer;
+  transition: color 0.15s ease, border-color 0.15s ease, background 0.15s ease;
+}
+
+.filter-btn:hover {
+  color: var(--text-primary);
+  border-color: var(--text-primary);
+}
+
+.filter-btn.active {
+  color: var(--signal-amber);
+  border-color: var(--signal-amber);
+  background: rgba(232, 163, 61, 0.08);
+}
+
+.sort-select {
+  font-family: var(--font-body);
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  background: var(--console-panel);
+  border: 1px solid var(--console-border);
+  border-radius: 4px;
+  padding: 0.3rem 0.5rem;
+  outline: none;
+  cursor: pointer;
+}
+
+.sort-select option {
+  background: var(--console-panel);
+  color: var(--text-primary);
+}
+
+/* --- Queue Table --- */
+
+.queue-wrapper {
+  padding: 0 1.5rem 2rem;
+}
+
+.queue-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 0.5rem;
+}
+
+.queue-table th {
+  font-size: 0.6875rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-muted);
+  text-align: left;
+  padding: 0.625rem 0.75rem;
+  border-bottom: 1px solid var(--console-border);
+}
+
+.queue-table td {
+  font-size: 0.8125rem;
+  padding: 0.625rem 0.75rem;
+  border-bottom: 1px solid var(--console-border);
+  vertical-align: middle;
+}
+
+.queue-table tr.queue-row {
+  cursor: pointer;
+  transition: background 0.12s ease;
+}
+
+.queue-table tr.queue-row:hover {
+  background: var(--console-panel);
+}
+
+/* Case ID */
+.cell-case-id {
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  max-width: 160px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Title */
+.cell-title {
+  max-width: 300px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--text-primary);
+}
+
+/* --- Similarity Meter (Three States) --- */
+
+.sim-meter {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-width: 140px;
+}
+
+.sim-bar-track {
+  flex: 1;
+  height: 6px;
+  border-radius: 3px;
+  background: var(--console-border);
+  overflow: hidden;
+  position: relative;
+}
+
+.sim-bar-fill {
+  height: 100%;
+  border-radius: 3px;
+  transition: width 0.3s ease;
+}
+
+/* Conflict colors */
+.sim-bar-fill.sim-green {
+  background: rgba(47, 107, 79, 0.7);
+}
+
+.sim-bar-fill.sim-amber {
+  background: var(--signal-amber);
+}
+
+.sim-bar-fill.sim-red {
+  background: rgba(178, 58, 46, 0.85);
+}
+
+/* Clean state: confirmed no conflict */
+.sim-bar-track.sim-clean {
+  border: 1px solid rgba(47, 107, 79, 0.4);
+  background: transparent;
+}
+
+/* Pending state: no data yet */
+.sim-bar-track.sim-pending {
+  background: repeating-linear-gradient(
+    135deg,
+    var(--console-border),
+    var(--console-border) 3px,
+    transparent 3px,
+    transparent 6px
+  );
+  border: 1px dashed var(--console-border);
+}
+
+.sim-label {
+  font-family: var(--font-mono);
+  font-size: 0.6875rem;
+  color: var(--text-muted);
+  min-width: 52px;
+  text-align: right;
+}
+
+/* --- Status Pill --- */
+
+.status-pill {
+  display: inline-block;
+  font-family: var(--font-body);
+  font-size: 0.6875rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  padding: 0.2rem 0.5rem;
+  border-radius: 3px;
+  white-space: nowrap;
+}
+
+.pill-pending {
+  color: var(--signal-amber);
+  background: rgba(232, 163, 61, 0.12);
+}
+
+.pill-approved {
+  color: rgba(47, 107, 79, 1);
+  background: rgba(47, 107, 79, 0.12);
+}
+
+.pill-rejected {
+  color: rgba(178, 58, 46, 0.9);
+  background: rgba(178, 58, 46, 0.1);
+}
+
+.pill-flagged {
+  color: rgba(178, 58, 46, 0.9);
+  background: rgba(178, 58, 46, 0.1);
+  animation: pillPulse 2s ease-in-out infinite;
+}
+
+@keyframes pillPulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.6; }
+}
+
+.pill-processing {
+  color: var(--text-muted);
+  background: rgba(138, 140, 144, 0.12);
+}
+
+/* --- Date cell --- */
+.cell-date {
+  font-family: var(--font-mono);
+  font-size: 0.6875rem;
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+
+/* --- Empty State --- */
+.queue-empty {
+  text-align: center;
+  padding: 3rem 1rem;
+  color: var(--text-muted);
+  font-size: 0.875rem;
+}
+
+/* --- Loading --- */
+.queue-loading {
+  text-align: center;
+  padding: 3rem 1rem;
+  color: var(--text-muted);
+  font-size: 0.875rem;
+}
+
+.queue-count {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  padding: 0.5rem 0;
+}

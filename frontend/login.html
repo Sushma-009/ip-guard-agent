@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>IP-Guard — Sign In</title>
+  <meta name="description" content="Sign in to IP-Guard to submit inventions or review patent cases.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Source+Serif+Pro:wght@400;600;700&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/app/tokens.css">
+  <link rel="stylesheet" href="/app/login.css">
+</head>
+<body data-theme="submitter">
+  <div class="login-wrapper">
+    <div class="login-card">
+      <div class="login-brand">
+        <h1>IP-Guard</h1>
+        <p>Patent Innovation Screening Platform</p>
+      </div>
+
+      <form id="login-form" autocomplete="on">
+        <div class="login-field">
+          <label for="email-input">Email</label>
+          <input type="email" id="email-input" name="email" placeholder="you@company.com" required autofocus>
+        </div>
+        <div class="login-field">
+          <label for="password-input">Password</label>
+          <input type="password" id="password-input" name="password" placeholder="••••••••" required>
+        </div>
+        <button type="submit" class="login-btn" id="login-btn">Sign in</button>
+      </form>
+
+      <div class="login-error" id="login-error" role="alert"></div>
+
+      <div class="login-footer">
+        IP-Guard &middot; Confidential &middot; For authorized personnel only
+      </div>
+    </div>
+  </div>
+
+  <script src="/app/auth.js"></script>
+  <script>
+    const form = document.getElementById('login-form');
+    const errorEl = document.getElementById('login-error');
+    const btn = document.getElementById('login-btn');
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      errorEl.classList.remove('visible');
+      btn.disabled = true;
+      btn.textContent = 'Signing in…';
+
+      const email = document.getElementById('email-input').value.trim();
+      const password = document.getElementById('password-input').value;
+
+      const payload = await login(email, password);
+
+      if (!payload) {
+        errorEl.textContent = 'Invalid email or password. Check your credentials and try again.';
+        errorEl.classList.add('visible');
+        btn.disabled = false;
+        btn.textContent = 'Sign in';
+        return;
+      }
+
+      /* Redirect based on role */
+      if (payload.role === 'submitter') {
+        window.location.href = '/app/submit.html';
+      } else {
+        window.location.href = '/app/dashboard.html';
+      }
+    });
+  </script>
+</body>
+</html>
