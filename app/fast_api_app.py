@@ -72,9 +72,10 @@ app.title = "ambient-expense-agent"
 app.description = "API for interacting with the Agent ambient-expense-agent"
 
 # Serve frontend static files at /app/ (same origin — no CORS needed)
+# Directory is named _static (not frontend) to prevent ADK from scanning it as an agent.
 from fastapi.staticfiles import StaticFiles
 import pathlib
-_frontend_dir = pathlib.Path(AGENT_DIR) / "frontend"
+_frontend_dir = pathlib.Path(AGENT_DIR) / "_static"
 if _frontend_dir.is_dir():
     app.mount("/app", StaticFiles(directory=str(_frontend_dir), html=True), name="frontend")
 

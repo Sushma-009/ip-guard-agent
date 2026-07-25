@@ -10,12 +10,22 @@ import pytest
 import json
 import os
 import sys
+import tempfile
 from unittest.mock import patch
 
 # Ensure project root is on sys.path
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 os.environ.setdefault("JWT_SECRET", "test-secret-for-frontend-checks")
+
+
+@pytest.fixture
+def isolated_db():
+    """Use an isolated temp database so tests don't corrupt the app's shared database."""
+    with tempfile.TemporaryDirectory() as tmpdir:
+        test_db_path = os.path.join(tmpdir, "test_tenant.db")
+        with patch("expense_agent.db.DB_PATH", test_db_path):
+            yield test_db_path
 
 
 # --- Task 1: query_audit null-vs-failure guarantee ---
@@ -52,7 +62,7 @@ def test_query_audit_failure_produces_explicit_error_object():
     assert qa.get("is_drifted") is False
 
 
-def test_query_audit_null_only_on_security_flagged_path():
+def test_query_audit_null_only_on_security_flagged_path(isolated_db):
     """query_audit is legitimately null only for security-flagged submissions
     that never reach the retrieval stage."""
     from expense_agent.db import (
@@ -61,10 +71,6 @@ def test_query_audit_null_only_on_security_flagged_path():
     )
     from expense_agent.auth import hash_password
     
-    # Re-initialize DB (drops and recreates)
-    db_path = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "data", "ip_guard_tenant.db")
-    if os.path.exists(db_path):
-        os.remove(db_path)
     initialize_db()
     
     create_organization("org_test_qa", "Test Org QA")
@@ -141,7 +147,7 @@ def test_parse_novelty_score_no_silent_zero():
     assert _parse_novelty_score("Novelty Score: 15") is None, "Score 15 out of 1-10 range should return None"
 
 
-def test_novelty_score_stored_as_null_in_database():
+def test_novelty_score_stored_as_null_in_database(isolated_db):
     """When novelty_score is None, the database stores SQL NULL, not 0."""
     from expense_agent.db import (
         initialize_db, create_organization, create_user,
@@ -149,9 +155,6 @@ def test_novelty_score_stored_as_null_in_database():
     )
     from expense_agent.auth import hash_password
     
-    db_path = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "data", "ip_guard_tenant.db")
-    if os.path.exists(db_path):
-        os.remove(db_path)
     initialize_db()
     
     create_organization("org_test_ns", "Test Org NS")
