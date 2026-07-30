@@ -27,6 +27,27 @@
     <div class="case-loading" id="case-loading">Loading case data…</div>
   </main>
 
+  <!-- Modal for showing matched patent details -->
+  <div class="patent-modal-overlay" id="patent-modal-overlay">
+    <div class="patent-modal-container">
+      <div class="patent-modal-header">
+        <div class="patent-modal-title-row">
+          <span class="patent-modal-id" id="patent-modal-id"></span>
+        </div>
+        <button class="patent-modal-close" id="patent-modal-close" aria-label="Close modal">&times;</button>
+      </div>
+      <div class="patent-modal-body">
+        <h3 class="patent-modal-patent-title" id="patent-modal-title"></h3>
+        <div class="patent-modal-meta">
+          <div class="patent-modal-meta-item">Filing Date: <strong id="patent-modal-date"></strong></div>
+          <div class="patent-modal-meta-item">Domain: <strong id="patent-modal-domain"></strong></div>
+        </div>
+        <div class="patent-modal-abstract-title">Abstract</div>
+        <p class="patent-modal-abstract" id="patent-modal-abstract"></p>
+      </div>
+    </div>
+  </div>
+
   <script src="/app/auth.js?v=2"></script>
   <script>
     /* --- Auth Guard --- */
@@ -140,7 +161,7 @@
         const tierLabel = (v.category || 'UNKNOWN').replace(/_/g, ' ');
 
         matchesHtml += '<div class="patent-match">' +
-          '<div class="patent-id">' + esc(v.patent_id || '—') + '</div>' +
+          '<div class="patent-id" style="cursor:pointer;text-decoration:underline;color:var(--signal-amber);" onclick="viewPatentDetails(\'' + esc(v.patent_id) + '\')">' + esc(v.patent_id || '—') + '</div>' +
           '<div class="patent-tier ' + tierClass + '">' + tierLabel + '</div>' +
           '</div>';
       }
@@ -236,10 +257,10 @@
 
         entriesHtml += '<div class="verifier-entry">' +
           '<div class="verifier-header">' +
-            '<span class="verifier-patent-id">' + esc(v.patent_id || '—') + '</span>' +
+            '<span class="verifier-patent-id" style="cursor:pointer;text-decoration:underline;color:var(--signal-amber);" onclick="viewPatentDetails(\'' + esc(v.patent_id) + '\')">' + esc(v.patent_id || '—') + '</span>' +
             '<span class="verifier-badge ' + badgeClass + '">' + badgeLabel + '</span>' +
           '</div>' +
-          '<div class="verifier-reasoning">' + esc(v.reasoning || 'No reasoning provided.') + '</div>' +
+          '<div class="verifier-reasoning">' + formatMarkdown(v.reasoning || 'No reasoning provided.') + '</div>' +
           '</div>';
       }
 
@@ -270,7 +291,7 @@
         '<div class="arbiter-panel">' +
           '<div class="arbiter-band ' + bandClass + '">' + esc(band) + '</div>' +
           diffHtml +
-          '<div class="arbiter-reasoning-text">' + esc(arb.reasoning || 'No reasoning provided.') + '</div>' +
+          '<div class="arbiter-reasoning-text">' + formatMarkdown(arb.reasoning || 'No reasoning provided.') + '</div>' +
         '</div>' +
         '</div>';
     }
@@ -296,7 +317,7 @@
       if (!analysis) {
         analysisHtml = '<div class="recommendation-text recommendation-unavailable">Analysis not yet available</div>';
       } else {
-        analysisHtml = '<div class="recommendation-text">' + esc(analysis) + '</div>';
+        analysisHtml = '<div class="recommendation-text">' + formatMarkdown(analysis) + '</div>';
       }
 
       return '<div class="case-section">' +
@@ -377,6 +398,74 @@
       const div = document.createElement('div');
       div.textContent = str;
       return div.innerHTML;
+    }
+
+    /* --- Simple Markdown Formatter and Highlighting --- */
+    function formatMarkdown(text) {
+      if (!text) return '';
+      
+      // Escape HTML to prevent XSS
+      let escaped = esc(text);
+      
+      // Highlight bold text **bold** with background amber tint capsules
+      escaped = escaped.replace(/\*\*(.*?)\*\*/g, '<strong style="color:var(--signal-amber);background:rgba(232,163,61,0.08);padding:0.1rem 0.3rem;border-radius:3px;font-weight:600;">$1</strong>');
+      
+      // Format headers ### and ####
+      escaped = escaped.replace(/####\s*(.*?)(?:<br>|$)/g, '<h4 style="color:var(--signal-amber);font-size:0.875rem;margin-top:1.25rem;margin-bottom:0.5rem;font-weight:600;text-transform:uppercase;letter-spacing:0.03em;">$1</h4>');
+      escaped = escaped.replace(/###\s*(.*?)(?:<br>|$)/g, '<h3 style="color:var(--text-primary);font-size:1rem;margin-top:1.5rem;margin-bottom:0.75rem;font-weight:600;">$1</h3>');
+      
+      // Convert list bullet points and numbers
+      escaped = escaped.replace(/(?:^|<br>)[-*•]\s*(.*?)(?=<br>|$)/g, '<div style="margin-left:1.25rem;margin-top:0.35rem;margin-bottom:0.35rem;display:flex;align-items:baseline;"><span style="color:var(--signal-amber);margin-right:0.5rem;font-size:0.6rem;">■</span><span>$1</span></div>');
+      escaped = escaped.replace(/(?:^|<br>)(\d+)\.\s*(.*?)(?=<br>|$)/g, '<div style="margin-left:1.25rem;margin-top:0.35rem;margin-bottom:0.35rem;display:flex;align-items:baseline;"><span style="color:var(--signal-amber);margin-right:0.5rem;font-family:var(--font-mono);font-size:0.75rem;">$1.</span><span>$2</span></div>');
+      
+      // Replace double breaks or single breaks with paragraph spacing
+      escaped = escaped.replace(/(?:\r?\n)+/g, '<br>');
+      
+      return escaped;
+    }
+
+    /* --- Patent Details Modal Interactivity --- */
+    const modalOverlay = document.getElementById('patent-modal-overlay');
+    const modalClose = document.getElementById('patent-modal-close');
+
+    modalClose.addEventListener('click', () => {
+      modalOverlay.classList.remove('active');
+    });
+
+    modalOverlay.addEventListener('click', (e) => {
+      if (e.target === modalOverlay) {
+        modalOverlay.classList.remove('active');
+      }
+    });
+
+    async function viewPatentDetails(patentId) {
+      if (!patentId) return;
+      
+      // Set modal into loading state
+      document.getElementById('patent-modal-id').textContent = patentId;
+      document.getElementById('patent-modal-title').textContent = 'Loading patent details...';
+      document.getElementById('patent-modal-date').textContent = '...';
+      document.getElementById('patent-modal-domain').textContent = '...';
+      document.getElementById('patent-modal-abstract').textContent = 'Fetching from IP-Guard Registry...';
+      
+      modalOverlay.classList.add('active');
+      
+      try {
+        const res = await apiFetch('/patents/' + encodeURIComponent(patentId));
+        if (res && res.ok) {
+          const patent = await res.json();
+          document.getElementById('patent-modal-title').textContent = patent.title || 'Untitled Patent';
+          document.getElementById('patent-modal-date').textContent = patent.filing_date || 'N/A';
+          document.getElementById('patent-modal-domain').textContent = (patent.domain_tag || 'N/A').replace(/_/g, ' ').toUpperCase();
+          document.getElementById('patent-modal-abstract').textContent = patent.abstract || 'No abstract available.';
+        } else {
+          document.getElementById('patent-modal-title').textContent = 'Patent Not Found';
+          document.getElementById('patent-modal-abstract').textContent = 'No registry data found for patent ID: ' + patentId;
+        }
+      } catch (err) {
+        document.getElementById('patent-modal-title').textContent = 'Network Error';
+        document.getElementById('patent-modal-abstract').textContent = 'Failed to fetch details: ' + err.message;
+      }
     }
 
     /* --- Init --- */

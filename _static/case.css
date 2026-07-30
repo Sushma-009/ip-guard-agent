@@ -499,3 +499,121 @@
   font-style: italic;
   padding: 0.5rem 0;
 }
+
+/* --- Patent Details Modal Overlay --- */
+.patent-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(0, 0, 0, 0.7);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.25s ease;
+}
+
+.patent-modal-overlay.active {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.patent-modal-container {
+  background: var(--console-panel);
+  border: 1px solid var(--console-border);
+  border-radius: 8px;
+  width: 90%;
+  max-width: 600px;
+  max-height: 85vh;
+  overflow-y: auto;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+  display: flex;
+  flex-direction: column;
+}
+
+.patent-modal-header {
+  padding: 1.25rem 1.5rem;
+  border-bottom: 1px solid var(--console-border);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.patent-modal-title-row {
+  display: flex;
+  align-items: baseline;
+  gap: 0.75rem;
+}
+
+.patent-modal-id {
+  font-family: var(--font-mono);
+  font-size: 0.95rem;
+  font-weight: 500;
+  color: var(--signal-amber);
+  background: rgba(232, 163, 61, 0.08);
+  padding: 0.15rem 0.4rem;
+  border-radius: 3px;
+}
+
+.patent-modal-close {
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  font-size: 1.5rem;
+  cursor: pointer;
+  padding: 0.25rem;
+  line-height: 1;
+}
+
+.patent-modal-close:hover {
+  color: var(--text-primary);
+}
+
+.patent-modal-body {
+  padding: 1.5rem;
+  overflow-y: auto;
+}
+
+.patent-modal-patent-title {
+  font-family: var(--font-display);
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-top: 0;
+  margin-bottom: 1rem;
+  line-height: 1.4;
+}
+
+.patent-modal-meta {
+  display: flex;
+  gap: 1.5rem;
+  margin-bottom: 1.5rem;
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+
+.patent-modal-meta-item strong {
+  color: var(--text-primary);
+  font-weight: 500;
+}
+
+.patent-modal-abstract-title {
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-muted);
+  margin-bottom: 0.5rem;
+}
+
+.patent-modal-abstract {
+  font-size: 0.875rem;
+  line-height: 1.6;
+  color: var(--text-primary);
+  margin: 0;
+  white-space: pre-wrap;
+}

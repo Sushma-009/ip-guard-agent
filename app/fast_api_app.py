@@ -412,6 +412,16 @@ async def submit_innovation(
         if is_hitl_paused(e):
             is_paused = True
             
+    # Re-fetch the session to obtain the updated state populated by the workflow run
+    try:
+        session = await session_service.get_session(
+            app_name="app",
+            user_id=user_id,
+            session_id=submission_id
+        )
+    except Exception as e:
+        logger.warning(f"Failed to reload session state after execution: {e}")
+
     session_state = getattr(session, "state", {})
     query_audit = session_state.get("query_audit")
     verifier_audit = session_state.get("verifier_audit", [])
@@ -480,6 +490,20 @@ async def get_submission_endpoint(
     if not sub:
         raise HTTPException(status_code=404, detail="Submission not found")
     return sub
+
+@app.get("/patents/{patent_id}")
+async def get_patent_endpoint(
+    patent_id: str,
+    current_user: dict = Depends(get_current_user)
+):
+    corpus_path = os.path.join(AGENT_DIR, "data", "patent_corpus.json")
+    if os.path.exists(corpus_path):
+        with open(corpus_path, "r") as f:
+            patents = json.load(f)
+        for p in patents:
+            if p["patent_id"].lower() == patent_id.lower():
+                return p
+    raise HTTPException(status_code=404, detail="Patent not found")
 
 class ReviewPayload(BaseModel):
     decision: str
