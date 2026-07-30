@@ -6,7 +6,7 @@
  * This is the conservative choice for a compliance tool.
  */
 
-let _token = null;
+let _token = sessionStorage.getItem('jwt_token') || null;
 
 /**
  * Decode JWT payload without verification.
@@ -44,6 +44,7 @@ async function login(email, password) {
 
   const data = await res.json();
   _token = data.access_token;
+  sessionStorage.setItem('jwt_token', _token);
   return _decodePayload(_token);
 }
 
@@ -67,6 +68,7 @@ async function apiFetch(url, options = {}) {
 
   if (res.status === 401) {
     _token = null;
+    sessionStorage.removeItem('jwt_token');
     window.location.href = '/app/login.html';
     return;
   }
@@ -138,5 +140,6 @@ function requireRole(allowedRoles) {
  */
 function logout() {
   _token = null;
+  sessionStorage.removeItem('jwt_token');
   window.location.href = '/app/login.html';
 }
