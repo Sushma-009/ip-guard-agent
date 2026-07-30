@@ -197,6 +197,17 @@ def update_submission_analysis(org_id: str, submission_id: str, innovation_analy
     finally:
         conn.close()
 
+def update_submission_description(org_id: str, submission_id: str, description: str):
+    conn = get_connection()
+    try:
+        conn.execute(
+            "UPDATE submissions SET description = ? WHERE org_id = ? AND submission_id = ?;",
+            (description, org_id, submission_id)
+        )
+        conn.commit()
+    finally:
+        conn.close()
+
 # Scoped audit logging helpers
 def create_audit_log(org_id: str, submission_id: str, query_audit: dict, verifier_audit: list, arbiter_audit: dict):
     conn = get_connection()

@@ -285,6 +285,25 @@
         document.getElementById('outcome-queued').classList.add('visible');
       }
 
+      /* Add redaction notice if secrets/PII were scrubbed */
+      if (data.redacted_types && data.redacted_types.length > 0) {
+        const warningHtml = '<div class="redaction-notice-box" style="margin-top: 1rem; padding: 0.75rem 1rem; background: rgba(178, 58, 46, 0.06); border: 1px solid rgba(178, 58, 46, 0.16); border-radius: 4px; color: var(--text-primary); text-align: left; font-size: 0.8125rem; font-family: var(--font-body);">' +
+          '<strong style="color: var(--stamp-red);">🔒 Security Redaction Notice:</strong>' +
+          '<div style="margin-top: 0.25rem; color: var(--text-muted); line-height: 1.4;">The system detected sensitive information (<strong>' + data.redacted_types.join(', ') + '</strong>) in your description. For compliance and security, this information has been automatically blacked out and scrubbed in the case registry. Please avoid uploading sensitive secrets/PII in future submissions.</div>' +
+          '</div>';
+        
+        const visibleCard = document.getElementById(
+          data.status === 'REJECTED' ? 'outcome-rejected' : 
+          data.status === 'SECURITY_FLAGGED' ? 'outcome-flagged' : 'outcome-queued'
+        );
+        if (visibleCard) {
+          const warningDiv = document.createElement('div');
+          warningDiv.className = 'redaction-warning-wrapper';
+          warningDiv.innerHTML = warningHtml;
+          visibleCard.appendChild(warningDiv);
+        }
+      }
+
       /* Add "submit another" link */
       const outcomes = document.querySelectorAll('.outcome.visible');
       outcomes.forEach(o => {

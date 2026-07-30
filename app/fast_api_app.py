@@ -31,7 +31,7 @@ from expense_agent.agent import root_agent
 from expense_agent.db import (
     initialize_db, create_organization, create_user, get_user_by_email,
     create_submission, get_submission, list_submissions, update_submission_status,
-    update_submission_analysis, create_audit_log, list_audit_logs
+    update_submission_analysis, update_submission_description, create_audit_log, list_audit_logs
 )
 from expense_agent.auth import (
     create_access_token, decode_access_token, hash_password, verify_password
@@ -442,13 +442,22 @@ async def submit_innovation(
     novelty_score = _parse_novelty_score(innovation_analysis)
     update_submission_analysis(org_id, submission_id, innovation_analysis, novelty_score)
 
+    # Persist the clean/redacted description from session state if available
+    submission_dict = session_state.get("submission")
+    if submission_dict and "description" in submission_dict:
+        clean_desc = submission_dict["description"]
+        update_submission_description(org_id, submission_id, clean_desc)
+
+    redacted_types = session_state.get("redacted_types", []) or []
+
     if is_paused:
         # Explicitly update status in database to PAUSED_FOR_REVIEW
         update_submission_status(org_id, submission_id, "PAUSED_FOR_REVIEW", "Pending Counsel decision.")
         return {
             "status": "PAUSED_FOR_REVIEW",
             "submission_id": submission_id,
-            "message": "Expense report is pending human approval."
+            "message": "Expense report is pending human approval.",
+            "redacted_types": redacted_types
         }
 
     status = "UNKNOWN"
@@ -466,7 +475,8 @@ async def submit_innovation(
     return {
         "status": status,
         "submission_id": submission_id,
-        "reason": reason
+        "reason": reason,
+        "redacted_types": redacted_types
     }
 
 @app.get("/submissions")
