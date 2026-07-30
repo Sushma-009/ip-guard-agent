@@ -425,7 +425,16 @@ async def submit_innovation(
         arbiter_audit=arbiter_audit
     )
 
+    # Persist innovation_analysis and novelty_score from session state.
+    # This must be done before the is_paused early return so counsel can view it in the UI.
+    # _parse_novelty_score returns None (not 0) if unparseable.
+    innovation_analysis = session_state.get("innovation_analysis")
+    novelty_score = _parse_novelty_score(innovation_analysis)
+    update_submission_analysis(org_id, submission_id, innovation_analysis, novelty_score)
+
     if is_paused:
+        # Explicitly update status in database to PAUSED_FOR_REVIEW
+        update_submission_status(org_id, submission_id, "PAUSED_FOR_REVIEW", "Pending Counsel decision.")
         return {
             "status": "PAUSED_FOR_REVIEW",
             "submission_id": submission_id,
@@ -443,12 +452,6 @@ async def submit_innovation(
             reason = getattr(final_output, "reason", "")
             
     update_submission_status(org_id, submission_id, status, reason)
-    
-    # Persist innovation_analysis and novelty_score from session state.
-    # _parse_novelty_score returns None (not 0) if unparseable.
-    innovation_analysis = session_state.get("innovation_analysis")
-    novelty_score = _parse_novelty_score(innovation_analysis)
-    update_submission_analysis(org_id, submission_id, innovation_analysis, novelty_score)
 
     return {
         "status": status,
