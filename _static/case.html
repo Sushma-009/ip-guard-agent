@@ -34,7 +34,7 @@
         <div class="patent-modal-title-row">
           <span class="patent-modal-id" id="patent-modal-id"></span>
         </div>
-        <button class="patent-modal-close" id="patent-modal-close" aria-label="Close modal">&times;</button>
+        <button class="patent-modal-close" id="patent-modal-close" onclick="document.getElementById('patent-modal-overlay').classList.remove('active')" aria-label="Close modal">&times;</button>
       </div>
       <div class="patent-modal-body">
         <h3 class="patent-modal-patent-title" id="patent-modal-title"></h3>
@@ -121,6 +121,9 @@
 
       /* Wire up decision buttons */
       wireDecisionControls(sub);
+
+      /* Load details for matched patents asynchronously */
+      loadSection2Details(audit ? audit.verifier_audit : []);
     }
 
     /* ---- Section 1: Original Submission ---- */
@@ -160,9 +163,13 @@
                           v.category === 'VERIFIED_CONFLICT_WITH_DIFFERENTIATOR' ? 'tier-moderate' : 'tier-low';
         const tierLabel = (v.category || 'UNKNOWN').replace(/_/g, ' ');
 
-        matchesHtml += '<div class="patent-match">' +
-          '<div class="patent-id" style="cursor:pointer;text-decoration:underline;color:var(--signal-amber);" onclick="viewPatentDetails(\'' + esc(v.patent_id) + '\')">' + esc(v.patent_id || '—') + '</div>' +
-          '<div class="patent-tier ' + tierClass + '">' + tierLabel + '</div>' +
+        matchesHtml += '<div class="patent-match" id="match-card-' + esc(v.patent_id) + '">' +
+          '<div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:0.5rem;">' +
+            '<div class="patent-id" style="cursor:pointer;text-decoration:underline;color:var(--signal-amber);font-weight:600;" onclick="viewPatentDetails(\'' + esc(v.patent_id) + '\')">' + esc(v.patent_id || '—') + '</div>' +
+            '<div class="patent-tier ' + tierClass + '">' + tierLabel + '</div>' +
+          '</div>' +
+          '<div class="patent-title-text" id="match-title-' + esc(v.patent_id) + '" style="font-family:var(--font-display);font-size:0.95rem;font-weight:600;margin-bottom:0.35rem;color:var(--text-primary);">Loading patent title...</div>' +
+          '<div class="patent-abstract" id="match-abstract-' + esc(v.patent_id) + '" style="font-size:0.8125rem;color:var(--text-muted);line-height:1.5;">Loading abstract...</div>' +
           '</div>';
       }
 
@@ -405,23 +412,23 @@
       if (!text) return '';
       
       // Escape HTML to prevent XSS
-      let escaped = esc(text);
+      let html = esc(text);
+      
+      // Replace newlines with <br> first so we can parse lines cleanly
+      html = html.replace(/(?:\r?\n)+/g, '<br>');
       
       // Highlight bold text **bold** with background amber tint capsules
-      escaped = escaped.replace(/\*\*(.*?)\*\*/g, '<strong style="color:var(--signal-amber);background:rgba(232,163,61,0.08);padding:0.1rem 0.3rem;border-radius:3px;font-weight:600;">$1</strong>');
+      html = html.replace(/\*\*(.*?)\*\*/g, '<strong style="color:var(--signal-amber);background:rgba(232,163,61,0.08);padding:0.1rem 0.3rem;border-radius:3px;font-weight:600;display:inline-block;margin:0 2px;">$1</strong>');
       
-      // Format headers ### and ####
-      escaped = escaped.replace(/####\s*(.*?)(?:<br>|$)/g, '<h4 style="color:var(--signal-amber);font-size:0.875rem;margin-top:1.25rem;margin-bottom:0.5rem;font-weight:600;text-transform:uppercase;letter-spacing:0.03em;">$1</h4>');
-      escaped = escaped.replace(/###\s*(.*?)(?:<br>|$)/g, '<h3 style="color:var(--text-primary);font-size:1rem;margin-top:1.5rem;margin-bottom:0.75rem;font-weight:600;">$1</h3>');
+      // Format headers #### and ###
+      html = html.replace(/(?:^|<br>)####\s*(.*?)(?=<br>|$)/g, '<h4 style="color:var(--signal-amber);font-size:0.875rem;margin-top:1.25rem;margin-bottom:0.5rem;font-weight:600;text-transform:uppercase;letter-spacing:0.03em;display:block;">$1</h4>');
+      html = html.replace(/(?:^|<br>)###\s*(.*?)(?=<br>|$)/g, '<h3 style="color:var(--text-primary);font-size:1rem;margin-top:1.5rem;margin-bottom:0.75rem;font-weight:600;display:block;">$1</h3>');
       
       // Convert list bullet points and numbers
-      escaped = escaped.replace(/(?:^|<br>)[-*•]\s*(.*?)(?=<br>|$)/g, '<div style="margin-left:1.25rem;margin-top:0.35rem;margin-bottom:0.35rem;display:flex;align-items:baseline;"><span style="color:var(--signal-amber);margin-right:0.5rem;font-size:0.6rem;">■</span><span>$1</span></div>');
-      escaped = escaped.replace(/(?:^|<br>)(\d+)\.\s*(.*?)(?=<br>|$)/g, '<div style="margin-left:1.25rem;margin-top:0.35rem;margin-bottom:0.35rem;display:flex;align-items:baseline;"><span style="color:var(--signal-amber);margin-right:0.5rem;font-family:var(--font-mono);font-size:0.75rem;">$1.</span><span>$2</span></div>');
+      html = html.replace(/(?:^|<br>)[-*•]\s*(.*?)(?=<br>|$)/g, '<div style="margin-left:1.25rem;margin-top:0.35rem;margin-bottom:0.35rem;display:flex;align-items:baseline;"><span style="color:var(--signal-amber);margin-right:0.5rem;font-size:0.6rem;">■</span><span>$1</span></div>');
+      html = html.replace(/(?:^|<br>)(\d+)\.\s*(.*?)(?=<br>|$)/g, '<div style="margin-left:1.25rem;margin-top:0.35rem;margin-bottom:0.35rem;display:flex;align-items:baseline;"><span style="color:var(--signal-amber);margin-right:0.5rem;font-family:var(--font-mono);font-size:0.75rem;">$1.</span><span>$2</span></div>');
       
-      // Replace double breaks or single breaks with paragraph spacing
-      escaped = escaped.replace(/(?:\r?\n)+/g, '<br>');
-      
-      return escaped;
+      return html;
     }
 
     /* --- Patent Details Modal Interactivity --- */
@@ -465,6 +472,29 @@
       } catch (err) {
         document.getElementById('patent-modal-title').textContent = 'Network Error';
         document.getElementById('patent-modal-abstract').textContent = 'Failed to fetch details: ' + err.message;
+      }
+    }
+
+    /* --- Matched Patent Card Detailed Lookups --- */
+    async function loadSection2Details(verifier) {
+      if (!verifier) return;
+      for (const v of verifier) {
+        if (!v.is_verified) continue;
+        try {
+          const res = await apiFetch('/patents/' + encodeURIComponent(v.patent_id));
+          if (res && res.ok) {
+            const patent = await res.json();
+            const titleEl = document.getElementById('match-title-' + v.patent_id);
+            const abstractEl = document.getElementById('match-abstract-' + v.patent_id);
+            if (titleEl) titleEl.textContent = patent.title || 'Untitled Patent';
+            if (abstractEl) abstractEl.textContent = patent.abstract || 'No abstract available.';
+          } else {
+            const titleEl = document.getElementById('match-title-' + v.patent_id);
+            if (titleEl) titleEl.textContent = 'Conflict Registry Lookup Failed';
+          }
+        } catch (err) {
+          console.error('Failed to load details for ' + v.patent_id, err);
+        }
       }
     }
 
