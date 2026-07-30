@@ -6,7 +6,7 @@ from fastapi.testclient import TestClient
 from unittest.mock import patch, MagicMock
 
 # Define standard environment before imports to ensure startup validation passes
-os.environ["JWT_SECRET"] = "super-secret-test-key-12345"
+os.environ.setdefault("JWT_SECRET", "super-secret-test-key-12345")
 
 from app.fast_api_app import app
 from expense_agent.db import (
@@ -16,8 +16,11 @@ from expense_agent.db import (
 )
 from expense_agent.auth import hash_password, create_access_token
 
+# isolated_db fixture is provided by tests/conftest.py
+
 @pytest.fixture(autouse=True)
-def setup_test_db():
+def setup_test_db(isolated_db):
+    """Seed tenant data inside the isolated temp database."""
     initialize_db()
     
     # Seed Organizations

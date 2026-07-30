@@ -136,6 +136,16 @@ def startup_event():
     # Org Eval user
     create_user("user_eval", "org_eval", "eval@orgeval.com", "counsel", pw_hash)
 
+# Automatically run database initialization and seeding on module import,
+# unless we are running in a pytest testing environment.
+import sys
+if "pytest" not in sys.modules and not any("pytest" in arg for arg in sys.argv):
+    try:
+        startup_event()
+        logger.info("Database initialized and seeded successfully on module load.")
+    except Exception as e:
+        logger.exception(f"Failed to initialize database on module load: {e}")
+
 @app.get("/health/vector-store")
 async def health_vector_store():
     """Health check endpoint returning vector database status and document count."""

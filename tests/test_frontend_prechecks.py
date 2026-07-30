@@ -10,7 +10,6 @@ import pytest
 import json
 import os
 import sys
-import tempfile
 from unittest.mock import patch
 
 # Ensure project root is on sys.path
@@ -18,15 +17,7 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 os.environ.setdefault("JWT_SECRET", "test-secret-for-frontend-checks")
 
-
-@pytest.fixture
-def isolated_db():
-    """Use an isolated temp database so tests don't corrupt the app's shared database."""
-    with tempfile.TemporaryDirectory() as tmpdir:
-        test_db_path = os.path.join(tmpdir, "test_tenant.db")
-        with patch("expense_agent.db.DB_PATH", test_db_path):
-            yield test_db_path
-
+# isolated_db fixture is provided by tests/conftest.py
 
 # --- Task 1: query_audit null-vs-failure guarantee ---
 
