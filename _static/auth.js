@@ -125,7 +125,7 @@ function requireRole(allowedRoles) {
   const role = getRole();
   if (!allowedRoles.includes(role)) {
     if (role === 'submitter') {
-      window.location.href = '/app/submit.html';
+      window.location.href = '/app/submit.html?v=' + Date.now();
     } else {
       window.location.href = '/app/dashboard.html';
     }
