@@ -338,7 +338,7 @@
 
     /* ---- Section 7: Counsel Decision Controls ---- */
     function renderSection7(sub) {
-      if (sub.status !== 'PAUSED_FOR_REVIEW') {
+      if (sub.status !== 'PAUSED_FOR_REVIEW' && sub.status !== 'SECURITY_FLAGGED') {
         const statusLabel = sub.status === 'APPROVED_FOR_FILING' ? 'approved for filing' :
                            sub.status === 'REJECTED' ? 'rejected' : sub.status.toLowerCase();
         return '<div class="case-section">' +

@@ -451,12 +451,20 @@ async def submit_innovation(
     redacted_types = session_state.get("redacted_types", []) or []
 
     if is_paused:
-        # Explicitly update status in database to PAUSED_FOR_REVIEW
-        update_submission_status(org_id, submission_id, "PAUSED_FOR_REVIEW", "Pending Counsel decision.")
+        is_security_event = session_state.get("is_security_event", False)
+        if is_security_event:
+            status = "SECURITY_FLAGGED"
+            reasons = session_state.get("security_reasons", [])
+            reason = "; ".join(reasons) if reasons else "Security violation detected."
+        else:
+            status = "PAUSED_FOR_REVIEW"
+            reason = "Pending Counsel decision."
+
+        update_submission_status(org_id, submission_id, status, reason)
         return {
-            "status": "PAUSED_FOR_REVIEW",
+            "status": status,
             "submission_id": submission_id,
-            "message": "Expense report is pending human approval.",
+            "reason": reason,
             "redacted_types": redacted_types
         }
 
@@ -534,7 +542,7 @@ async def review_submission(
     if not sub:
         raise HTTPException(status_code=404, detail="Submission not found")
         
-    if sub["status"] != "PAUSED_FOR_REVIEW":
+    if sub["status"] not in ("PAUSED_FOR_REVIEW", "SECURITY_FLAGGED"):
         raise HTTPException(status_code=400, detail="Submission is not pending review")
         
     try:
