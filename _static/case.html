@@ -453,7 +453,7 @@
       document.getElementById('patent-modal-title').textContent = 'Loading patent details...';
       document.getElementById('patent-modal-date').textContent = '...';
       document.getElementById('patent-modal-domain').textContent = '...';
-      document.getElementById('patent-modal-abstract').textContent = 'Fetching from IP-Guard Registry...';
+      document.getElementById('patent-modal-abstract').textContent = 'Fetching from local patent corpus database...';
       
       modalOverlay.classList.add('active');
       
@@ -467,7 +467,7 @@
           document.getElementById('patent-modal-abstract').textContent = patent.abstract || 'No abstract available.';
         } else {
           document.getElementById('patent-modal-title').textContent = 'Patent Not Found';
-          document.getElementById('patent-modal-abstract').textContent = 'No registry data found for patent ID: ' + patentId;
+          document.getElementById('patent-modal-abstract').textContent = 'No corpus database record found for patent ID: ' + patentId;
         }
       } catch (err) {
         document.getElementById('patent-modal-title').textContent = 'Network Error';
@@ -490,7 +490,7 @@
             if (abstractEl) abstractEl.textContent = patent.abstract || 'No abstract available.';
           } else {
             const titleEl = document.getElementById('match-title-' + v.patent_id);
-            if (titleEl) titleEl.textContent = 'Conflict Registry Lookup Failed';
+            if (titleEl) titleEl.textContent = 'Conflict Database Lookup Failed';
           }
         } catch (err) {
           console.error('Failed to load details for ' + v.patent_id, err);

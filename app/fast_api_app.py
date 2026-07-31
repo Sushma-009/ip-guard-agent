@@ -557,24 +557,55 @@ async def review_submission(
                 user_id=sub["user_id"],
                 session_id=submission_id
             )
+        print(f"DEBUG_REVIEW: sub_user_id={sub['user_id']}, submission_id={submission_id}, session_events_len={len(getattr(session, 'events', []) or [])}, session_state={getattr(session, 'state', {})}")
             
         decision_dict = {
             "decision": payload.decision,
             "comment": payload.comment
         }
-        new_message = types.Content(
-            role="user",
-            parts=[types.Part.from_text(text=json.dumps(decision_dict))]
-        )
+        
+        # Find active HITL interrupt function call in the session events
+        fc_id = None
+        if session and session.events:
+            for event in reversed(session.events):
+                for fc in event.get_function_calls():
+                    if fc.name == "adk_request_input":
+                        fc_id = fc.id
+                        break
+                if fc_id:
+                    break
+                    
+        if fc_id:
+            new_message = types.Content(
+                role="user",
+                parts=[
+                    types.Part(
+                        function_response=types.FunctionResponse(
+                            name="adk_request_input",
+                            id=fc_id,
+                            response=decision_dict
+                        )
+                    )
+                ]
+            )
+        else:
+            new_message = types.Content(
+                role="user",
+                parts=[types.Part.from_text(text=json.dumps(decision_dict))]
+            )
+        
+        invocation_id = session.events[-1].invocation_id if (session.events and len(session.events) > 0) else None
         
         events = []
         async for event in runner.run_async(
             new_message=new_message,
             user_id=sub["user_id"],
             session_id=session.id,
+            invocation_id=invocation_id,
             run_config=RunConfig(streaming_mode=StreamingMode.SSE),
         ):
             events.append(event)
+            print(f"REVIEW_EVENT: {event}")
             
         final_output = None
         for e in events:

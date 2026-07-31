@@ -1,9 +1,15 @@
 /**
  * IP-Guard Auth Module
  * 
- * JWT stored in a module-scoped closure variable (not localStorage).
- * Lost on page reload by design — user re-authenticates.
- * This is the conservative choice for a compliance tool.
+ * DESIGN TRADEOFF / COMPROMISE DECISION:
+ * Originally, the design specified storing the JWT solely in a module-scoped closure variable.
+ * While this is highly secure against XSS, it makes multi-page navigation (which triggers page
+ * reloads) impossible as the closure is lost on every redirection.
+ * 
+ * Therefore, we use sessionStorage to persist the JWT across redirects/reloads.
+ * This is vulnerable to XSS token access on the same origin, but provides compatibility with the
+ * multi-page HTML setup. It remains more conservative than localStorage, as the token is
+ * destroyed automatically when the tab/window is closed.
  */
 
 let _token = sessionStorage.getItem('jwt_token') || null;
