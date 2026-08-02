@@ -119,6 +119,43 @@ def test_standard_counsel_approval_flow():
     assert "Approved for filing by IP Counsel" in final_record["reason"]
 
 
+def test_standard_counsel_rejection_flow():
+    """Verify that a standard non-flagged submission goes to PAUSED_FOR_REVIEW and can be successfully rejected by Counsel."""
+    client = TestClient(app)
+    auth = get_auth_header("user_a_sub", "org_a", "submitter")
+    
+    payload = {
+        "title": "Ledger Sharding",
+        "description": "A secure sharding scheme for distributed ledger databases that ensures Byzantine fault tolerance and high transactional scalability.",
+        "libraries_used": ["requests"]
+    }
+    
+    # Submit standard clean innovation
+    response = client.post("/submissions", json=payload, headers=auth)
+    assert response.status_code == 200
+    data = response.json()
+    assert data["status"] == "PAUSED_FOR_REVIEW"
+    
+    sub_id = data["submission_id"]
+    
+    # Counsel reviews (REJECTS) the submission
+    counsel_auth = get_auth_header("user_a_counsel", "org_a", "counsel")
+    review_payload = {
+        "decision": "REJECT",
+        "comment": "Not novel enough, similar prior art exists."
+    }
+    
+    review_res = client.post(f"/submissions/{sub_id}/review", json=review_payload, headers=counsel_auth)
+    assert review_res.status_code == 200
+    
+    # Check that database status has successfully updated to REJECTED and reason has comment
+    final_record = get_submission("org_a", sub_id)
+    assert final_record["status"] == "REJECTED"
+    assert "Rejected by IP Counsel" in final_record["reason"]
+    assert "Not novel enough, similar prior art exists" in final_record["reason"]
+
+
+
 
 def test_security_flag_and_review_clearance():
     """Verify that adversarial prompt injection triggers SECURITY_FLAGGED status and is reviewable by Counsel."""
